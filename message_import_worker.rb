@@ -1,26 +1,30 @@
 require 'resque'
-require 'resque-retry'
+# require 'resque-retry'
 require "resque-loner"
 require "./import"
 
 class MessageImportWorker
   include Resque::Plugins::UniqueJob
-  @queue = :import_email
+  @queue = :import_messages
 
-  @retry_limit = 3
-  @retry_delay = 60
+  # @retry_limit = 3
+  # @retry_delay = 60
 
   def self.perform(options)
+    options = options.with_indifferent_access
     importer = MessageImporter.new(options)
     importer.import! :after => options[:after], :before => options[:before]
   end
 
   def self.schedule!(options)
     user = options[:user]
-    access_token = options[:access_token]
-    start_date, end_date = MessageImporter.new(options).with_message_ids do |message_ids|
+    start_date, end_date = MessageImporter.new(options).with_message_ids do |imap, message_ids|
+      unless message_ids.any?
+        puts "No messages"
+        return
+      end
       start_time, end_time = [message_ids.first, message_ids.last].map do |message_id|
-        Time.parse(imap.fetch(message_id, 'ENVELOPE')[0].attr['ENVELOPE'].date)
+        Date.parse(imap.fetch(message_id, 'ENVELOPE')[0].attr['ENVELOPE'].date)
       end
       [start_time.beginning_of_month, end_time.end_of_month]
     end
@@ -31,13 +35,27 @@ class MessageImportWorker
       count += 1
       next_date = start_date + 1.month
       puts "Scheduling from #{start_date} - #{next_date}"
-      Resque.enqueue self, :user => user, :access_token => access_token, :after => start_date, :before => next_date
+      Resque.enqueue MessageImportWorker, :user => user, :after => start_date, :before => next_date #, :ts => Time.now
       start_date = next_date
     end
   end
 end
 
-if __FILE__ == $0
-  Resque.inline = true
-  MessageImportWorker.schedule! :address => 'oliver.steele@gmail.com', :access_token => ENV['GMAIL_ACCESS_TOKEN'], :limit => 1
+def main
+  schedule_options = { :user => 'oliver.steele@gmail.com' }
+
+  OptionParser.new do|opts|
+    opts.on('-n', '--limit N', "Limit to N jobs") do |n| schedule_options[:limit] = n.to_i end
+    opts.on('-u', '--user USER') do |user| schedule_options[:user] = user end
+    opts.on('--inline') do Resque.inline = true end
+
+    opts.on('-h', '--help', 'Display this screen' ) do
+      puts opts
+      exit
+    end
+  end.parse!
+
+  MessageImportWorker.schedule! schedule_options
 end
+
+main if __FILE__ == $0
