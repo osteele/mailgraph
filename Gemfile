@@ -7,6 +7,8 @@ gem 'haml'
 gem 'sass'
 gem 'activesupport'
 gem 'activerecord'
+gem 'rake'
+gem 'shotgun'
 
 gem 'gmail'
 
@@ -19,3 +21,10 @@ group :production do
 end
 
 gem "sinatra-activerecord"
+
+gem 'foreman'
+gem 'resque'
+gem 'resque-retry'
+gem 'resque-loner'
+gem 'resque-history'
+gem 'resque-loner'
