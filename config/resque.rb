@@ -11,7 +11,7 @@ Resque.redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.
 
 Resque::Failure::Multiple.classes = [Resque::Failure::Redis] # Resque::Failure::Sentry
 Resque::Failure.backend = Resque::Failure::Multiple
-Resque.inline = true
+# Resque.inline = true
 
 Resque::Server.class_eval do
   use Rack::Auth::Basic do |email, password|

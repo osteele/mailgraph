@@ -11,6 +11,7 @@ gem 'rake'
 gem 'shotgun'
 
 gem 'gmail'
+gem 'gmail_xoauth'
 
 group :development, :test do
   gem 'sqlite3'
@@ -28,3 +29,4 @@ gem 'resque-retry'
 gem 'resque-loner'
 gem 'resque-history'
 gem 'resque-loner'
+

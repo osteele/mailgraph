@@ -115,6 +115,7 @@ DEPENDENCIES
   coffee-script
   foreman
   gmail
+  gmail_xoauth
   haml
   pg
   rake

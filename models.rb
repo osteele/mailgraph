@@ -43,6 +43,11 @@ class Address < ActiveRecord::Base
   def self.from_imap_address(address)
     self.where(:name => address.name, :address => "#{address.mailbox}@#{address.host}", :host => address.host).first_or_create
   end
+
+  def self.from_string(address)
+    name, host = address.split(/@/, 2)
+    self.where(:name => address, :address => address, :host => host)
+  end
 end
 
 class MessageRecipient < ActiveRecord::Base

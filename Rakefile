@@ -2,8 +2,7 @@ require "bundler/setup"
 Bundler.require(:default)
 require 'sinatra/activerecord/rake'
 require 'resque/tasks'
-# require 'resque_scheduler/tasks'
-require 'resque-loner'
+#require 'resque_scheduler/tasks'
 require './app'
 require './import'
 
@@ -15,5 +14,12 @@ task "resque:setup" do
   end
 end
 
-desc "Alias for resque:work (to run workers on Heroku)"
-task "jobs:work" => "resque:work"
+desc "Schedule and work, so we only need 1 dyno"
+task :schedule_and_work do
+  if Process.fork
+    sh "rake environment resque:work"
+  else
+    sh "rake resque:scheduler"
+    Process.wait
+  end
+end
