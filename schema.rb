@@ -4,6 +4,12 @@ require 'logger'
 
 class Schema < ActiveRecord::Migration
   def change
+    create_table :accounts do |t|
+      t.string :user
+      t.integer :message_count
+    end
+
+    add_index :accounts, :user, :unique => true
     create_table :addresses do |t|
       t.string :name
       t.string :address
@@ -15,7 +21,7 @@ class Schema < ActiveRecord::Migration
     add_index :addresses, [:name, :address]
 
     create_table :messages do |t|
-      t.integer :uid
+      t.integer :uid, :null => true
       t.integer :sender_id, :null => false, :references => [:addresses, :id]
       t.string :subject
       t.datetime :date
@@ -26,18 +32,18 @@ class Schema < ActiveRecord::Migration
     add_index :messages, :date
 
     create_table :message_recipients, :id => false do |t|
-      t.integer :message_id, :null => false, :references => [:students, :id]
-      t.integer :recipient_id, :null => false, :references => [:students, :id]
+      t.integer :message_id, :null => false, :references => [:messages, :id]
+      t.integer :recipient_id, :null => false, :references => [:addresses, :id]
     end
 
     add_index :message_recipients, :message_id
     add_index :message_recipients, :recipient_id
 
     create_table :tokens do |t|
-      t.string :user
-      t.string :access_token
-      t.string :refresh_token
-      t.datetime :expires_at
+      t.string :user, :null => true
+      t.string :access_token, :null => true
+      t.string :refresh_token, :null => true
+      t.datetime :expires_at, :null => true
     end
 
     add_index :tokens, :user, :unique => true
@@ -46,12 +52,9 @@ end
 
 class Migration < ActiveRecord::Migration
   def change
-    create_table :accounts do |t|
-      t.string :user
-      t.integer :message_count
-    end
-
-    add_index :accounts, :user, :unique => true
+    add_column :messages, :account_id, :integer, :null => false, :default => 1, :references => [:accounts, :id]
+    add_column :messages, :gm_message_id, :integer # X-GM-MSGID
+    add_column :messages, :message_thread_id, :integer # X-GM-THRID
   end
 end
 

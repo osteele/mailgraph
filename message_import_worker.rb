@@ -13,7 +13,7 @@ class MessageImportWorker
   def self.perform(options)
     options = options.with_indifferent_access
     importer = MessageImporter.new(options)
-    importer.import! :after => options[:after], :before => options[:before]
+    importer.import_message_headers! :after => options[:after], :before => options[:before]
   end
 
   def self.schedule!(options)
@@ -35,7 +35,7 @@ class MessageImportWorker
     while start_date < end_date
       break if options[:limit] and count >= options[:limit]
       count += 1
-      next_date = start_date + 1.month
+      next_date = start_date + 2.weeks
       puts "Scheduling from #{start_date} - #{next_date}"
       Resque.enqueue MessageImportWorker, :user => user, :after => start_date, :before => next_date #, :ts => Time.now
       start_date = next_date
