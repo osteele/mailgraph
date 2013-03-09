@@ -29,5 +29,11 @@ class Message < ActiveRecord::Base
   # has_many :links, :dependent => destroy
 end
 
+class Account < ActiveRecord::Base
+  def message_loaded_count
+    @message_loaded_count ||= Message.count
+  end
+end
+
 class Token < ActiveRecord::Base
 end

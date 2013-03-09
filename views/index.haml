@@ -2,7 +2,11 @@
 %html
   %head
     %meta(charset="utf-8")
-    %title Moby Dick Term Graph
+    - if account.message_loaded_count < account.message_count
+      %meta(http-equiv="refresh" content="5")
+    %title
+      Account Information for
+      = account.user
     %link(rel="stylesheet" href="css/bootstrap.min.css")
     %link(rel="stylesheet" href="css/style.css")
     %script(src="js/libs/modernizr-2.0.6.min.js")
@@ -11,28 +15,21 @@
     #container.container
       %header
         %h1
-          Terms in
-          %i Moby Dick
-        %p
-          Some of the most frequent terms in
-          %i Moby Dick.
+          Account Information for
+          = account.user
 
-      #main.main
-        .btn-group(data-toggle="buttons-radio")
-          %button#stream.btn.switch.active(type="button>") Stream
-          %button#stack.btn.switch(type="button") Stacked
-          %button#area.btn.switch(type="button") Area
-        #vis
+      #main
+        %p
+          = account.message_loaded_count.commas
+          of
+          = account.message_count.commas
+          messages loaded
+          = surround '(', '%)' do
+            = '%3.0f' % (100 * account.message_loaded_count / account.message_count)
 
       %footer
-        %p Text from Project Gutenberg.
-        %p
-          Graph display adapted from Jim Vallandingham's
-          %a(href="http://flowingdata.com/2013/01/17/how-to-animate-transitions-between-multiple-charts/") article in Flowing Data.
 
   #legend
 
   %script(src="js/libs/jquery-1.7.2.min.js")
   %script(src="js/libs/bootstrap.min.js")
-  %script(src="js/libs/d3.v3.js")
-  %script(src="js/flow.js")

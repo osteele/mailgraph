@@ -18,7 +18,9 @@ class MessageImportWorker
 
   def self.schedule!(options)
     user = options[:user]
+    account = Account.where(:user => options[:user]).first_or_create!
     start_date, end_date = MessageImporter.new(options).with_message_ids do |imap, message_ids|
+      account.update_attributes :message_count => message_ids.length
       unless message_ids.any?
         puts "No messages"
         return

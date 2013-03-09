@@ -32,11 +32,7 @@ class Schema < ActiveRecord::Migration
 
     add_index :message_recipients, :message_id
     add_index :message_recipients, :recipient_id
-  end
-end
 
-class Migration < ActiveRecord::Migration
-  def change
     create_table :tokens do |t|
       t.string :user
       t.string :access_token
@@ -44,7 +40,18 @@ class Migration < ActiveRecord::Migration
       t.datetime :expires_at
     end
 
-    add_index :tokens, :user
+    add_index :tokens, :user, :unique => true
+  end
+end
+
+class Migration < ActiveRecord::Migration
+  def change
+    create_table :accounts do |t|
+      t.string :user
+      t.integer :message_count
+    end
+
+    add_index :accounts, :user, :unique => true
   end
 end
 

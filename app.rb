@@ -4,10 +4,14 @@ Bundler.require(:default)
 require 'sinatra'
 require 'haml'
 require 'coffee-script'
-require './config/resque.rb'
+require './models'
 
 get '/' do
-  haml :index
+  haml :index, :locals => {:account => Account.find_by_user('oliver.steele@gmail.com')}
+end
+
+get '/flow' do
+  haml :flow
 end
 
 get "/js/flow.js" do
@@ -24,4 +28,10 @@ def send_sinatra_file(path, &missing_file_block)
   file_path = File.join(File.dirname(__FILE__), BUILD_DIR,  path)
   file_path = File.join(file_path, 'index.html') unless file_path =~ /\.[a-z]+$/i
   File.exist?(file_path) ? send_file(file_path) : missing_file_block.call
+end
+
+class Fixnum
+  def commas
+    to_s.reverse.gsub(/(\d\d\d)/, '\1,').reverse.sub(/^,/, '')
+  end
 end

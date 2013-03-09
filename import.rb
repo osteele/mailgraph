@@ -60,7 +60,7 @@ class MessageImporter
 end
 
 if __FILE__ == $0
-  importer = MessageImporter.schedule! :address => 'oliver.steele@gmail.com'
   Schema.new.change unless File.exists?('db/data.sqlite3')
+  importer = MessageImporter.new(:user => 'oliver.steele@gmail.com')
   importer.import!
 end

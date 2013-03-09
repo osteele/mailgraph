@@ -1,0 +1,38 @@
+!!! 5
+%html
+  %head
+    %meta(charset="utf-8")
+    %title Moby Dick Term Graph
+    %link(rel="stylesheet" href="css/bootstrap.min.css")
+    %link(rel="stylesheet" href="css/style.css")
+    %script(src="js/libs/modernizr-2.0.6.min.js")
+
+  %body
+    #container.container
+      %header
+        %h1
+          Terms in
+          %i Moby Dick
+        %p
+          Some of the most frequent terms in
+          %i Moby Dick.
+
+      #main.main
+        .btn-group(data-toggle="buttons-radio")
+          %button#stream.btn.switch.active(type="button>") Stream
+          %button#stack.btn.switch(type="button") Stacked
+          %button#area.btn.switch(type="button") Area
+        #vis
+
+      %footer
+        %p Text from Project Gutenberg.
+        %p
+          Graph display adapted from Jim Vallandingham's
+          %a(href="http://flowingdata.com/2013/01/17/how-to-animate-transitions-between-multiple-charts/") article in Flowing Data.
+
+  #legend
+
+  %script(src="js/libs/jquery-1.7.2.min.js")
+  %script(src="js/libs/bootstrap.min.js")
+  %script(src="js/libs/d3.v3.js")
+  %script(src="js/flow.js")
