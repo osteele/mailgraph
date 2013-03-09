@@ -1,3 +1,4 @@
+require 'pp'
 require './app'
 require 'mail'
 require 'google/api_client'
@@ -54,33 +55,36 @@ class MessageImporter
   end
 
   def import_message_headers!(options={})
-    count = 0
     with_message_ids(options) do |imap, message_ids|
-      for message_id in message_ids
-        if Message.exists?(:uid => message_id)
-          puts "Skipping #{message_id}" if count > 0
-          next
-        end
-        count += 1
-        message = imap.fetch(message_id, ['ENVELOPE', 'X-GM-MSGID'])[0]
-        envelope = message.attr['ENVELOPE']
-        recipients = envelope.to || []
-        puts "#{message_id} #{Date.parse(envelope.date)} #{envelope.from.first.name} #{envelope.subject} #{recipients.map(&:name)}"
-        raise "Multiple senders for #{message_id}" unless envelope.from.length == 1
-        sender = Address.from_imap_address(envelope.from.first)
-        recipients = recipients.map { |address| Address.from_imap_address(address) }
-        begin
-          Message.transaction do
-            record = Message.create(
-              :uid => message_id,
-              :subject => envelope.subject,
-              :date => envelope.date,
-              :sender_id => sender.id,
-              :gm_message_id => message.attr['X-GM-MSGID'])
-            record.recipients = recipients
+      # puts "Winnowing #{message_ids.length}"
+      message_ids = message_ids.reject { |id| Message.exists?(:uid => id) }
+      puts "Retrieving #{message_ids.length} headers"
+      message_ids.each_slice(500) do |slice_ids|
+        # p "Fetching #{slice_ids.inspect}"
+        for message in (imap.fetch(slice_ids, ['ENVELOPE', 'X-GM-MSGID']) || [])
+          message_id = message.seqno
+          envelope = message.attr['ENVELOPE']
+          recipients = envelope.to || []
+          date = nil
+          date = Date.parse(envelope.date) rescue nil
+          next unless date
+          puts "#{message_id} #{Date.parse(envelope.date)} #{envelope.from.first.name} #{envelope.subject} #{recipients.map(&:name)}"
+          raise "Multiple senders for #{message_id}" unless envelope.from.length == 1
+          sender = Address.from_imap_address(envelope.from.first)
+          recipients = recipients.map { |address| Address.from_imap_address(address) }
+          begin
+            Message.transaction do
+              record = Message.create(
+                :uid => message_id,
+                :subject => envelope.subject,
+                :date => envelope.date,
+                :sender_id => sender.id,
+                :gm_message_id => message.attr['X-GM-MSGID'])
+              record.recipients = recipients
+            end
+          rescue SQLite3::ConstraintException => e
+            raise unless e.to_s =~ /column uid is not unique/
           end
-        rescue SQLite3::ConstraintException => e
-          raise unless e.to_s =~ /column uid is not unique/
         end
       end
     end
@@ -88,18 +92,39 @@ class MessageImporter
 
   def add_field!(imap_attribute, record_attribute)
     with_imap do |imap|
-      for message in Message.where(record_attribute => nil)
-        value = imap.fetch(message.uid, imap_attribute)[0].attr[imap_attribute]
-        puts "Message #{message.uid} #{record_attribute}=#{value.inspect}"
-        message.update_attributes record_attribute => value if value
+      Message.where(record_attribute => nil).find_in_batches(:batch_size => 1000) do |records|
+        messages = imap.fetch(records.map(&:uid), imap_attribute) || []
+        messages.each do |message|
+          record = records.find { |r| r.uid == message.seqno }
+          value = message.attr[imap_attribute]
+          puts "Message #{record.uid} #{record_attribute}=#{value.inspect}"
+          record.update_attributes record_attribute => value if value
+        end
       end
     end
   end
 end
 
-if __FILE__ == $0
+def main
+  options = { :user => 'oliver.steele@gmail.com' }
+  search_options = {}
+
+  OptionParser.new do|opts|
+    opts.on('--since DATE') do |date| search_options[:after] = date end
+    opts.on('--after DATE') do |date| search_options[:after] = date end
+    opts.on('--before DATE') do |date| search_options[:before] = date end
+    opts.on('-u', '--user USER') do |user| options[:user] = user end
+
+    opts.on('-h', '--help', 'Display this screen' ) do
+      puts opts
+      exit
+    end
+  end.parse!
+
   Schema.new.change unless File.exists?('db/data.sqlite3')
-  importer = MessageImporter.new(:user => 'oliver.steele@gmail.com')
-  importer.import_message_headers!
+  importer = MessageImporter.new(options)
+  importer.import_message_headers! search_options
   # importer.add_field! 'X-GM-MSGID', :gm_message_id
 end
+
+main if __FILE__ == $0
