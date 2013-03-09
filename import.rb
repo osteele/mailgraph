@@ -13,6 +13,7 @@ class MessageImporter
   end
 
   def connection(&block)
+    self.renew!
     token = Token.find_by_user(user)
     raise "No token for #{user.inspect}" unless token
     access_token = token.access_token
@@ -33,6 +34,23 @@ class MessageImporter
       message_ids = imap.search(search_options)
       yield imap, message_ids
     end
+  end
+
+  def renew!
+    require 'google/api_client'
+    token = Token.find_by_user(user)
+    return if token.expires_at > Time.now + 30.seconds
+
+    client = Google::APIClient.new
+    auth = client.authorization
+    auth.client_id = '641654287458-oq3atarvk2lm55ld2qt2ektmm8nrs3a7.apps.googleusercontent.com'
+    auth.client_secret = 'xHdPdx_bZi6rPFla0-sFPery'
+    auth.redirect_uri = "urn:ietf:oauth:2.0:oob"
+    auth.scope = ['https://mail.google.com/', 'https://www.googleapis.com/auth/userinfo.email']
+
+    auth.update_token! :access_token => token.access_token, :refresh_token => token.refresh_token #, :expires_at => Time.now - 1.minute
+    auth.fetch_access_token!
+    token.update_attributes :access_token => auth.access_token, :expires_at => Time.now + auth.expires_in.seconds
   end
 
   def import!(options={})

@@ -12,6 +12,7 @@ gem 'shotgun'
 
 gem 'gmail'
 gem 'gmail_xoauth'
+gem 'google-api-client'
 
 group :development, :test do
   gem 'sqlite3'

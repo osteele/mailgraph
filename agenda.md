@@ -3,16 +3,13 @@ Basics:
 * Create dataset:
 * Graph it
 
-* Server serves, caches dataset
-
-* Resque
-* Marker for which months have been completed?
-* Use cloud database
-* Use cloud redis cache
-
-
-* Use oauth https://github.com/nfo/gmail_xoauth
+Deploy:
+* Sign in to get token
+* Cloud database
 
 Later:
+* Marker for which months have been completed?
 * message.envelope.in_reply_to
 * cc, bcc (also in envelope)
+* Server serves, caches dataset
+* separate api calls for completion, senders, recipients
