@@ -12,11 +12,12 @@ end
 
 get '/data/contacts.json' do
   account = Account.find_by_user('oliver.steele@gmail.com')
-  span = [account.messages.where('date IS NOT NULL AND date > "1975-01-01"').first(:order => :date).date, account.messages.last(:order => 'date').date]
+  start_date = account.messages.where('date IS NOT NULL AND date > "1975-01-01"').first(:order => :date).date.beginning_of_year
+  end_date = account.messages.last(:order => 'date').date
   stats = {}
-  start_date = span.first.beginning_of_year
-  while start_date < span.last
-    results = Message.connection.select_all(<<-"SQL", nil, [[nil, start_date], [nil, start_date + 1.year]])
+  while start_date < end_date
+    next_date = start_date + 1.month
+    results = Message.connection.select_all(<<-"SQL", nil, [[nil, start_date], [nil, next_date]])
       SELECT address, COUNT(*) AS count FROM addresses
       JOIN message_associations ON address_id=addresses.id
       JOIN messages ON message_id=messages.id
@@ -27,8 +28,8 @@ get '/data/contacts.json' do
       ORDER BY COUNT(*) DESC
       LIMIT 10
     SQL
-    stats[start_date.strftime("%Y")] = results.inject({}) { |h, r| h[r["address"]] = r["count"]; h }
-    start_date += 1.year
+    stats[start_date.strftime("%Y-%m")] = results.inject({}) { |h, r| h[r["address"]] = r["count"]; h }
+    start_date = next_date
   end
   names = stats.map { |date, counts| counts.keys }.flatten.uniq
   names = names.inject({}) do |h, name|

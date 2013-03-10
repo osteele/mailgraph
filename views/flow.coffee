@@ -45,7 +45,7 @@ stack = d3.layout.stack()
 xAxis = d3.svg.axis()
   .scale(x)
   .tickSize(-height)
-  # .tickFormat(d3.time.format('%a %d'))
+  .tickFormat(d3.time.format('%Y'))
 
 # we will populate this variable with our
 # data array, once its been loaded
@@ -90,10 +90,8 @@ start = () ->
   # manually specify these values as the tick
   # values
   dates = data[0].values.map((v) -> v.date)
-  index = 0
   dates = dates.filter (d) ->
-    index += 1
-    (index % 2) == 0
+    (d.getMonth() % 12) == 0
 
   xAxis.tickValues(dates)
 
@@ -198,6 +196,10 @@ streamgraph = () ->
   t.select("path.line")
     .style("stroke-opacity", 1e-6)
     .attr("d", (d) -> line(d.values))
+
+  svg.selectAll("path.area")
+    .append("svg:title").text((d) -> d.key)
+
 
 # ---
 # Code to transition to Stacked Area chart.
@@ -309,7 +311,7 @@ hideLegend = (d,i) ->
 # ---
 createLegend = () ->
   legendWidth = 200
-  legendHeight = 245
+  legendHeight = 545
   legend = d3.select("#legend").append("svg")
     .attr("width", legendWidth)
     .attr("height", legendHeight)
@@ -332,11 +334,11 @@ createLegend = () ->
   keys = legendG.selectAll("g")
     .data(data)
     .enter().append("g")
-    .attr("transform", (d,i) -> "translate(#{5},#{10 + 40 * (i + 0)})")
+    .attr("transform", (d,i) -> "translate(#{5},#{10 + 30 * (i + 0)})")
 
   keys.append("rect")
     .attr("width", 30)
-    .attr("height", 30)
+    .attr("height", 20)
     .attr("rx", 4)
     .attr("ry", 4)
     .attr("fill", (d) -> color(d.key))
@@ -345,7 +347,7 @@ createLegend = () ->
     .text((d) -> d.key)
     .attr("text-anchor", "left")
     .attr("dx", "2.3em")
-    .attr("dy", "1.3em")
+    .attr("dy", "1.1em")
 
 # ---
 # Function that is called when data is loaded
@@ -356,9 +358,15 @@ createLegend = () ->
 display = (error, rawData) ->
   data = rawData
 
+  # a parser to convert our date string into a JS time object.
+  parseTime = d3.time.format.utc("%Y-%m").parse
+
   # go through each data entry and set its
   # date and count property
   data.forEach (s) ->
+    s.values.forEach (d) ->
+      d.date = parseTime(d.date)
+
     # precompute the largest count value for each request type
     s.maxCount = d3.max(s.values, (d) -> d.count)
 
