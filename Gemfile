@@ -8,14 +8,16 @@ gem 'sass'
 gem 'activesupport'
 gem 'activerecord'
 gem 'rake'
-gem 'shotgun'
-
 gem 'gmail'
 gem 'gmail_xoauth'
 gem 'google-api-client'
+gem 'httparty'
 
 group :development, :test do
+  gem 'pg' # this gem is required to use postgres on Heroku
   gem 'sqlite3'
+  gem 'shotgun'
+  gem 'pry'
 end
 
 group :production do

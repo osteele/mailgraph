@@ -1,0 +1,2 @@
+CREATE USER mail WITH PASSWORD '...';
+CREATE DATABASE mail WITH owner=mail;

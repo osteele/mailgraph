@@ -1,7 +1,10 @@
 require 'thin'
 require 'launchy'
+require 'httparty'
 require 'google/api_client'
 require 'google/api_client/client_secrets'
+require 'active_support'
+require './models'
 
 # Small helper for the sample apps for performing OAuth 2.0 flows from the command
 # line. Starts an embedded server to handle redirects.
@@ -20,16 +23,16 @@ class CommandLineOAuthHelper
   # Request authorization. Opens a browser and waits for response
   def authorize
     auth = @authorization
-    url = @authorization.authorization_uri().to_s
+    url = auth.authorization_uri().to_s
     server = Thin::Server.new('0.0.0.0', 3000) do
-      run lambda { |env|
-          # Exchange the auth code & quit
-          req = Rack::Request.new(env)
-          auth.code = req['code']
-          auth.fetch_access_token!
-          server.stop()
-          [200, {'Content-Type' => 'text/plain'}, 'OK']
-      }
+      run lambda do |env|
+        # Exchange the auth code & quit
+        req = Rack::Request.new(env)
+        auth.code = req['code']
+        auth.fetch_access_token!
+        server.stop()
+        [200, {'Content-Type' => 'text/plain'}, 'OK']
+      end
     end
 
     Launchy.open(url)
@@ -40,12 +43,10 @@ class CommandLineOAuthHelper
 end
 
 auth = CommandLineOAuthHelper.new(['https://mail.google.com/', 'https://www.googleapis.com/auth/userinfo.email']).authorize
-p auth.access_token
-p auth.refresh_token
-# p auth.fetch("/auth/userinfo.email")
-tp = TokenPair.new
-tp.update_token!(auth)
-p tp
-p tp.to_hash
+data = HTTParty.get("https://www.googleapis.com/oauth2/v1/userinfo", :query => {:alt => :json, :access_token => auth.access_token}).parsed_response
+email = data['email']
 
-# OAuth::fetch grabbing /auth/userinfo.email
+record = Token.where(:user => email).first_or_initialize
+record.assign_attributes :access_token => auth.access_token, :refresh_token => auth.refresh_token, :expires_at => auth.issued_at + auth.expires_in.seconds
+record.save!
+

@@ -51,7 +51,7 @@ class MessageImporter
 
     auth.update_token! :access_token => token.access_token, :refresh_token => token.refresh_token #, :expires_at => Time.now - 1.minute
     auth.fetch_access_token!
-    token.update_attributes :access_token => auth.access_token, :expires_at => Time.now + auth.expires_in.seconds
+    token.update_attributes :access_token => auth.access_token, :expires_at => auth.issued_at + auth.expires_in.seconds
   end
 
   def import_message_headers!(options={})
@@ -65,10 +65,8 @@ class MessageImporter
           message_id = message.seqno
           envelope = message.attr['ENVELOPE']
           recipients = envelope.to || []
-          date = nil
           date = Date.parse(envelope.date) rescue nil
-          next unless date
-          puts "#{message_id} #{Date.parse(envelope.date)} #{envelope.from.first.name} #{envelope.subject} #{recipients.map(&:name)}"
+          puts "#{message_id} #{date} #{envelope.from.first.name} #{envelope.subject} #{recipients.map(&:name)}"
           raise "Multiple senders for #{message_id}" unless envelope.from.length == 1
           sender = Address.from_imap_address(envelope.from.first)
           recipients = recipients.map { |address| Address.from_imap_address(address) }

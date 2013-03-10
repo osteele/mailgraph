@@ -25,6 +25,9 @@ class Schema < ActiveRecord::Migration
       t.integer :sender_id, :null => false, :references => [:addresses, :id]
       t.string :subject
       t.datetime :date
+      t.integer :account_id, :null => false, :default => 1, :references => [:accounts, :id]
+      t.string :gm_message_id      # X-GM-MSGID
+      t.string :message_thread_id  # X-GM-THRID
     end
 
     add_index :messages, :uid, :unique => true
@@ -52,16 +55,14 @@ end
 
 class Migration < ActiveRecord::Migration
   def change
-    add_column :messages, :account_id, :integer, :null => false, :default => 1, :references => [:accounts, :id]
-    add_column :messages, :gm_message_id, :integer # X-GM-MSGID
-    add_column :messages, :message_thread_id, :integer # X-GM-THRID
   end
 end
 
 if __FILE__ == $0
   ActiveRecord::Base.logger = Logger.new('debug.log')
   ActiveRecord::Base.configurations = YAML::load(IO.read('database.yml'))
-  ActiveRecord::Base.establish_connection('development')
-  Schema.new.change unless File.exists?('db/data.sqlite3')
+  environment = 'development'
+  ActiveRecord::Base.establish_connection(environment)
+  Schema.new.change unless File.exists?('db/data.sqlite3') and ActiveRecord::Base.configurations[environment]['adapter'] == 'sqlite3'
   Migration.new.change
 end
