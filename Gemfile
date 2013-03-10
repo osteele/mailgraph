@@ -12,6 +12,7 @@ gem 'gmail'
 gem 'gmail_xoauth'
 gem 'google-api-client'
 gem 'httparty'
+gem 'chronic'
 
 group :development, :test do
   gem 'pg' # this gem is required to use postgres on Heroku

@@ -20,6 +20,7 @@ GEM
       multi_json (>= 1.0.0)
     backports (3.1.0)
     builder (3.0.4)
+    chronic (0.9.1)
     coderay (1.0.9)
     coffee-script (2.2.0)
       coffee-script-source
@@ -152,6 +153,7 @@ PLATFORMS
 DEPENDENCIES
   activerecord
   activesupport
+  chronic
   coffee-script
   foreman
   gmail

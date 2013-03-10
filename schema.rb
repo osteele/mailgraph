@@ -15,6 +15,7 @@ class Schema < ActiveRecord::Migration
       t.string :name
       t.string :address
       t.string :host
+      t.integer :person_id, :references => [:addresses, :id]
     end
 
     add_index :addresses, :address
@@ -22,12 +23,11 @@ class Schema < ActiveRecord::Migration
     add_index :addresses, [:name, :address]
 
     create_table :messages do |t|
-      t.integer :account_id
-      t.integer :uid, :null => true
+      t.integer :account_id, :null => false, :default => 1, :references => [:accounts, :id]
+      t.integer :uid, :null => false
       # t.integer :sender_id, :null => false, :references => [:addresses, :id]
       t.string :subject
       t.datetime :date
-      t.integer :account_id, :null => false, :default => 1, :references => [:accounts, :id]
       t.string :gm_message_id  # X-GM-MSGID
       t.string :gm_thread_id   # X-GM-THRID
     end
@@ -47,10 +47,10 @@ class Schema < ActiveRecord::Migration
     add_index :message_associations, [:message_id, :field]
 
     create_table :tokens do |t|
-      t.string :user, :null => true
-      t.string :access_token, :null => true
-      t.string :refresh_token, :null => true
-      t.datetime :expires_at, :null => true
+      t.string :user, :null => false
+      t.string :access_token, :null => false
+      t.string :refresh_token, :null => false
+      t.datetime :expires_at, :null => false
     end
 
     add_index :tokens, :user, :unique => true
