@@ -40,6 +40,7 @@ class MessageImporter
 
   def renew_access_token!
     token = Token.find_by_user(user)
+    raise "No access token for #{user}" unless token
     return if token.expires_at > Time.now + 30.seconds
 
     client = Google::APIClient.new
@@ -55,30 +56,40 @@ class MessageImporter
   end
 
   def import_message_headers!(options={})
+    count = 0
+    limit = options[:limit]
+    account = Account.where(:user => user).first_or_create!
     with_message_ids(options) do |imap, message_ids|
-      # puts "Winnowing #{message_ids.length}"
+      account.update_attributes :message_count => message_ids.length
       message_ids = message_ids.reject { |id| Message.exists?(:uid => id) }
       puts "Retrieving #{message_ids.length} headers"
-      message_ids.each_slice(500) do |slice_ids|
-        # p "Fetching #{slice_ids.inspect}"
-        for message in (imap.fetch(slice_ids, ['ENVELOPE', 'X-GM-MSGID']) || [])
+      message_ids.each_slice(1000) do |slice_ids|
+        break if limit and count >= limit
+        for message in (imap.fetch(slice_ids, ['ENVELOPE', 'X-GM-MSGID', 'X-GM-THRID']) || [])
+          break if limit and count >= limit
+          count += 1
           message_id = message.seqno
           envelope = message.attr['ENVELOPE']
+          raise "Multiple senders for #{message_id}" unless envelope.from.length == 1
           recipients = envelope.to || []
           date = Date.parse(envelope.date) rescue nil
-          puts "#{message_id} #{date} #{envelope.from.first.name} #{envelope.subject} #{recipients.map(&:name)}"
-          raise "Multiple senders for #{message_id}" unless envelope.from.length == 1
-          sender = Address.from_imap_address(envelope.from.first)
-          recipients = recipients.map { |address| Address.from_imap_address(address) }
+          puts "#{message_id} #{date} #{envelope.from.first.name} #{envelope.subject} #{recipients.map { |a| "#{a.mailbox}@{a.host}" }}"
           begin
             Message.transaction do
               record = Message.create(
+                :account_id => account.id,
                 :uid => message_id,
                 :subject => envelope.subject,
                 :date => envelope.date,
-                :sender_id => sender.id,
-                :gm_message_id => message.attr['X-GM-MSGID'])
-              record.recipients = recipients
+                # :sender => sender,
+                :gm_message_id => message.attr['X-GM-MSGID'],
+                :gm_thread_id  => message.attr['X-GM-THRID']
+                )
+              for field in %w[from to cc bcc]
+                for address in envelope.send(field) || []
+                  MessageAssociation.create :message => record, :address => Address.from_imap_address(address), :field => field
+                end
+              end
             end
           rescue SQLite3::ConstraintException => e
             raise unless e.to_s =~ /column uid is not unique/
@@ -105,12 +116,13 @@ end
 
 def main
   options = { :user => 'oliver.steele@gmail.com' }
-  search_options = {}
+  import_options = {}
 
   OptionParser.new do|opts|
-    opts.on('--since DATE') do |date| search_options[:after] = date end
-    opts.on('--after DATE') do |date| search_options[:after] = date end
-    opts.on('--before DATE') do |date| search_options[:before] = date end
+    opts.on('--since DATE') do |date| import_options[:after] = date end
+    opts.on('--after DATE') do |date| import_options[:after] = date end
+    opts.on('--before DATE') do |date| import_options[:before] = date end
+    opts.on('-n', '--limit N') do |limit| import_options[:limit] = limit.to_i end
     opts.on('-u', '--user USER') do |user| options[:user] = user end
 
     opts.on('-h', '--help', 'Display this screen' ) do
@@ -121,7 +133,7 @@ def main
 
   Schema.new.change unless File.exists?('db/data.sqlite3')
   importer = MessageImporter.new(options)
-  importer.import_message_headers! search_options
+  importer.import_message_headers! import_options
   # importer.add_field! 'X-GM-MSGID', :gm_message_id
 end
 

@@ -17,16 +17,16 @@ class Address < ActiveRecord::Base
   end
 end
 
-class MessageRecipient < ActiveRecord::Base
+class MessageAssociation < ActiveRecord::Base
   belongs_to :message
-  belongs_to :recipient, :class_name => Address
+  belongs_to :address
 end
 
 class Message < ActiveRecord::Base
-  has_one :sender, :class_name => Address
-  has_many :message_recipients
-  has_many :recipients, :class_name => Address, :through => :message_recipients#, :foreign_key => :recipient_id
-  # has_many :links, :dependent => destroy
+  has_many :message_associations
+  # has_many :senders, :class_name => Address, :through => :message_associates, :source => :address, :finder_sql
+  # has_many :to, :class_name => Address, :through => :message_associates, :source => :address
+  # has_many :cc, :class_name => Address, :through => :message_associates, :source => :address
 end
 
 class Account < ActiveRecord::Base

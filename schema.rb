@@ -10,6 +10,7 @@ class Schema < ActiveRecord::Migration
     end
 
     add_index :accounts, :user, :unique => true
+
     create_table :addresses do |t|
       t.string :name
       t.string :address
@@ -21,26 +22,29 @@ class Schema < ActiveRecord::Migration
     add_index :addresses, [:name, :address]
 
     create_table :messages do |t|
+      t.integer :account_id
       t.integer :uid, :null => true
-      t.integer :sender_id, :null => false, :references => [:addresses, :id]
+      # t.integer :sender_id, :null => false, :references => [:addresses, :id]
       t.string :subject
       t.datetime :date
       t.integer :account_id, :null => false, :default => 1, :references => [:accounts, :id]
-      t.string :gm_message_id      # X-GM-MSGID
-      t.string :message_thread_id  # X-GM-THRID
+      t.string :gm_message_id  # X-GM-MSGID
+      t.string :gm_thread_id   # X-GM-THRID
     end
 
     add_index :messages, :uid, :unique => true
-    add_index :messages, :sender_id
+    # add_index :messages, :sender_id
     add_index :messages, :date
 
-    create_table :message_recipients, :id => false do |t|
+    create_table :message_associations, :id => false do |t|
       t.integer :message_id, :null => false, :references => [:messages, :id]
-      t.integer :recipient_id, :null => false, :references => [:addresses, :id]
+      t.integer :address_id, :null => false, :references => [:addresses, :id]
+      t.string :field, :limit => 4, :null => false # ("from", "to", "cc", "bcc")
     end
 
-    add_index :message_recipients, :message_id
-    add_index :message_recipients, :recipient_id
+    add_index :message_associations, :message_id
+    add_index :message_associations, :address_id
+    add_index :message_associations, [:message_id, :field]
 
     create_table :tokens do |t|
       t.string :user, :null => true

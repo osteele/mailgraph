@@ -37,7 +37,10 @@ class MessageImportWorker
       count += 1
       next_date = start_date + 1.month
       puts "Scheduling from #{start_date} - #{next_date}"
-      Resque.enqueue MessageImportWorker, :user => user, :after => start_date, :before => next_date #, :ts => Time.now
+      options = {:user => user}
+      options[:after] => start_date if count > 1
+      options[:before] => next_date if next_date < end_date
+      Resque.enqueue MessageImportWorker, options
       start_date = next_date
     end
   end

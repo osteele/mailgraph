@@ -25,14 +25,14 @@ class CommandLineOAuthHelper
     auth = @authorization
     url = auth.authorization_uri().to_s
     server = Thin::Server.new('0.0.0.0', 3000) do
-      run lambda do |env|
+      run lambda { |env|
         # Exchange the auth code & quit
         req = Rack::Request.new(env)
         auth.code = req['code']
         auth.fetch_access_token!
         server.stop()
         [200, {'Content-Type' => 'text/plain'}, 'OK']
-      end
+      }
     end
 
     Launchy.open(url)
