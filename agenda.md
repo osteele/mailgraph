@@ -1,19 +1,15 @@
 Next:
-* Select top senders and recipients for each quarter
-* Create list of equivalent email addresses
-* Most frequent senders, recipients across all time
-* Create dataset: top senders for each month (or quarter), filtered by top senders for all time
-* Graph it
-
-Multiuser:
-* Add user_id to messages
-* Server serves, caches dataset
+* Display all labels
+* Mouseover to show labels
+* Switch between senders and recipients
+* Remove account owner
+* Recognize equivalent email addresses
 
 Deploy:
 * Cloud database
 
 Later:
-* Use Grape to server API
+* Use Grape to serve API
 * Marker for which months have been completed?
 * message.envelope.in_reply_to
 

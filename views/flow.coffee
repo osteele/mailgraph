@@ -23,19 +23,19 @@ color = d3.scale.category10()
 # charts
 area = d3.svg.area()
     .interpolate("basis")
-    .x((d) -> x(d.chapter))
+    .x((d) -> x(d.date))
 
 # line generator to be used
 # for the Area Chart edges
 line = d3.svg.line()
     .interpolate("basis")
-    .x((d) -> x(d.chapter))
+    .x((d) -> x(d.date))
 
 # stack layout for streamgraph
 # and stacked area chart
 stack = d3.layout.stack()
   .values((d) -> d.values)
-  .x((d) -> d.chapter)
+  .x((d) -> d.date)
   .y((d) -> d.count)
   .out((d,y0,y) -> d.count0 = y0)
   .order("reverse")
@@ -79,8 +79,8 @@ transitionTo = (name) ->
 start = () ->
   # first, lets setup our x scale domain
   # this assumes that the dates in our data are in order
-  minDate = d3.min(data, (d) -> d.values[0].chapter)
-  maxDate = d3.max(data, (d) -> d.values[d.values.length - 1].chapter)
+  minDate = d3.min(data, (d) -> d.values[0].date)
+  maxDate = d3.max(data, (d) -> d.values[d.values.length - 1].date)
   x.domain([minDate, maxDate])
 
   # D3's axis functionality usually works great
@@ -89,7 +89,7 @@ start = () ->
   # here I extract out every other day - and
   # manually specify these values as the tick
   # values
-  dates = data[0].values.map((v) -> v.chapter)
+  dates = data[0].values.map((v) -> v.date)
   index = 0
   dates = dates.filter (d) ->
     index += 1
@@ -354,17 +354,11 @@ createLegend = () ->
 # visualization framework.
 # ---
 display = (error, rawData) ->
-  filterer = {"Ahab": 1, "Queequeg": 1, "Stubb": 1, "Starbuck": 1, "Moby Dick":1, "Pip":1, "Tashtego": 1, "Daggoo": 1}
-  # filterer = {"Nantucket": 1, "Pacific": 1, "Greenland": 1, "Perth": 1, "Atlantic":1, "New Bedford":1, "England": 1}
-  data = rawData.filter((d) -> filterer[d.key] == 1)
+  data = rawData
 
   # go through each data entry and set its
   # date and count property
   data.forEach (s) ->
-    s.values.forEach (d) ->
-      d.chapter = parseInt(d.chapter, 10)
-      d.count = parseFloat(d.count)
-
     # precompute the largest count value for each request type
     s.maxCount = d3.max(s.values, (d) -> d.count)
 
@@ -382,4 +376,4 @@ $ ->
     transitionTo(id)
 
   # load the data and call 'display'
-  d3.json("data/moby-people.json", display)
+  d3.json("data/contacts.json", display)

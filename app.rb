@@ -10,6 +10,41 @@ get '/' do
   haml :index, :locals => {:account => Account.find_by_user('oliver.steele@gmail.com')}
 end
 
+get '/data/contacts.json' do
+  account = Account.find_by_user('oliver.steele@gmail.com')
+  span = [account.messages.where('date IS NOT NULL AND date > "1975-01-01"').first(:order => :date).date, account.messages.last(:order => 'date').date]
+  stats = {}
+  start_date = span.first.beginning_of_year
+  while start_date < span.last
+    results = Message.connection.select_all(<<-"SQL", nil, [[nil, start_date], [nil, start_date + 1.year]])
+      SELECT address, COUNT(*) AS count FROM addresses
+      JOIN message_associations ON address_id=addresses.id
+      JOIN messages ON message_id=messages.id
+      WHERE messages.date > $1 AND messages.date < $2
+      AND HOST IS NOT NULL
+      AND address NOT LIKE 'steele@%' AND address NOT LIKE 'oliver.steele@%' AND address NOT LIKE 'osteele@%'
+      GROUP BY address
+      ORDER BY COUNT(*) DESC
+      LIMIT 10
+    SQL
+    stats[start_date.strftime("%Y")] = results.inject({}) { |h, r| h[r["address"]] = r["count"]; h }
+    start_date += 1.year
+  end
+  names = stats.map { |date, counts| counts.keys }.flatten.uniq
+  names = names.inject({}) do |h, name|
+    h[name] = stats.map { |_, x| x[name] }.compact.sum
+    h
+  end.to_a.sort { |a, b| b[1] <=> a[1] }[0...25].map { |name, _| name }
+  series = names.map do |name|
+    {
+      :key => name,
+      :values => stats.map { |date, x| {date: date, count: x[name] || 0} }
+    }
+  end
+  content_type :json
+  series.to_json
+end
+
 get '/flow' do
   haml :flow
 end
