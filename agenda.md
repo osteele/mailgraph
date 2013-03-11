@@ -1,10 +1,15 @@
 Next:
+* Combine equivalent email addresses
+* Allow user to mark email addresses as equivalent
+* Link from home page
+* Filter to direct messages
 * Switch between senders and recipients
 * Select time window
 * Remove account owner
-* Recognize equivalent email addresses
 
 Deploy:
+* Require sign in
+* Trigger jobs when user signs in
 * Cloud database
 
 Later:
@@ -12,6 +17,7 @@ Later:
 * Marker for which months have been completed?
 * message.envelope.in_reply_to
 * Adaptive time periods
+* Update mail messages in background
 
 Publication:
 * http://www.3scale.net/2012/06/the-10-minute-api-up-running-3scale-grape-heroku-api-10-minutes/

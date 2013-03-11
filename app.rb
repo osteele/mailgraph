@@ -24,18 +24,16 @@ get '/data/contacts.json' do
   limit = (params[:limit] || 20).to_i
   stats = {}
   map = {}
-  exceptions = "address NOT LIKE 'steele@%' AND address NOT LIKE 'oliver.steele@%' AND address NOT LIKE 'osteele@%'"
-  exceptions = "address NOT LIKE 'marg@%' AND address NOT LIKE 'margaret.minsky@%'" if user =~ /^margaret\.minsky@/
   while start_date < end_date
     next_date = start_date + 1.week
     results = Message.connection.select_all(<<-"SQL", nil, [[nil, account.id], [nil, start_date], [nil, next_date]])
-      SELECT address, addresses.person_id, addresses.id, COUNT(*) AS count FROM addresses
+      SELECT address, addresses.id, addresses.person_id, COUNT(*) AS count FROM addresses
       JOIN message_associations ON address_id=addresses.id
       JOIN messages ON message_id=messages.id
-      WHERE messages.account_id = $1 AND messages.date > $2 AND messages.date < $3
+      WHERE messages.account_id = $1 AND $2 <= messages.date AND messages.date < $3
       AND HOST IS NOT NULL
-      AND #{exceptions}
-      GROUP BY (CASE WHEN addresses.person_id IS NULL THEN addresses.id ELSE addresses.person_id END)
+      AND addresses.id != $1 AND (person_id IS NULL OR person_id != $1)
+      GROUP BY (CASE WHEN person_id THEN person_id ELSE addresses.id END)
       ORDER BY COUNT(*) DESC
       LIMIT 15
     SQL

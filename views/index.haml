@@ -2,7 +2,7 @@
 %html
   %head
     %meta(charset="utf-8")
-    - if account.message_loaded_count < account.message_count
+    - if account.messages.count < account.message_count
       %meta(http-equiv="refresh" content="5")
     %title
       Account Information for
@@ -20,12 +20,15 @@
 
       #main
         %p
-          = account.message_loaded_count.commas
+          = account.messages.count.commas
           of
           = account.message_count.commas
           messages loaded
-          = surround '(', '%)' do
-            = '%3.0f' % (100 * account.message_loaded_count / account.message_count)
+          - if true
+            = surround '(', '%)' do
+              = '%3.0f' % (100 * account.messages.count / account.message_count)
+
+        %p= account.frequent_correspondents(30).map(&:address).join(", ")
 
       %footer
 

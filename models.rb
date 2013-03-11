@@ -32,8 +32,20 @@ end
 class Account < ActiveRecord::Base
   has_many :messages
 
-  def message_loaded_count
-    @message_loaded_count ||= messages.count
+  def frequent_correspondents(limit=nil)
+    limit ||= 15
+    addresses = Address.find_by_sql([<<-"SQL", self.id, self.id, limit])
+      SELECT (CASE WHEN person_id THEN person_id ELSE addresses.id END) AS id, COUNT(*) AS count FROM addresses
+      JOIN message_associations ON address_id=addresses.id
+      JOIN messages ON message_id=messages.id
+      WHERE messages.account_id = ?
+      AND HOST IS NOT NULL
+      AND (person_id IS NULL OR person_id != ?)
+      GROUP BY id
+      ORDER BY COUNT(*) DESC
+      LIMIT ?
+    SQL
+    Address.find(addresses.map(&:id))
   end
 end
 
