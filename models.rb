@@ -33,7 +33,7 @@ class Account < ActiveRecord::Base
   has_many :messages
 
   def message_loaded_count
-    @message_loaded_count ||= Message.count
+    @message_loaded_count ||= messages.count
   end
 end
 

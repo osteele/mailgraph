@@ -25,15 +25,13 @@ class Schema < ActiveRecord::Migration
     create_table :messages do |t|
       t.integer :account_id, :null => false, :default => 1, :references => [:accounts, :id]
       t.integer :uid, :null => false
-      # t.integer :sender_id, :null => false, :references => [:addresses, :id]
       t.string :subject
       t.datetime :date
       t.string :gm_message_id  # X-GM-MSGID
       t.string :gm_thread_id   # X-GM-THRID
     end
 
-    add_index :messages, :uid, :unique => true
-    # add_index :messages, :sender_id
+    add_index :messages, [:account_id, :uid], :unique => true
     add_index :messages, :date
 
     create_table :message_associations, :id => false do |t|

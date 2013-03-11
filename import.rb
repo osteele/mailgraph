@@ -11,7 +11,7 @@ class MessageImporter
 
   def initialize(options)
     @user = options[:user]
-    @mailbox = '[Gmail]/All Mail'
+    @mailbox = options[:mailbox] || '[Gmail]/All Mail'
   end
 
   def with_imap(&block)
@@ -21,7 +21,10 @@ class MessageImporter
     access_token = token.access_token
     imap = Net::IMAP.new('imap.gmail.com', 993, usessl=true, certs=nil, verify=false)
     imap.authenticate('XOAUTH2', user, access_token)
-    imap.select(@mailbox)
+    mailbox = @mailbox
+    mailbox_names = imap.list("", "*").map(&:name)
+    raise "No mailbox #{mailbox}; valid mailboxes are #{mailbox_names.join(", ")}" unless mailbox in mailbox_names
+    imap.select(mailbox)
     yield imap
   ensure
     imap.expunge rescue nil
@@ -61,7 +64,7 @@ class MessageImporter
     account = Account.where(:user => user).first_or_create!
     with_message_ids(options) do |imap, message_ids|
       account.update_attributes :message_count => message_ids.length
-      message_ids = message_ids.reject { |id| Message.exists?(:uid => id) }
+      message_ids = message_ids.reject { |id| Message.exists?(:account_id => account.id, :uid => id) }
       puts "Retrieving #{message_ids.length} headers"
       message_ids.each_slice(1000) do |slice_ids|
         break if limit and count >= limit
@@ -123,6 +126,7 @@ def main
     opts.on('--after DATE') do |date| import_options[:after] = date end
     opts.on('--before DATE') do |date| import_options[:before] = date end
     opts.on('-n', '--limit N') do |limit| import_options[:limit] = limit.to_i end
+    opts.on('--mailbox MAILBOX') do |mailbox| options[:mailbox] = mailbox end
     opts.on('-u', '--user USER') do |user| options[:user] = user end
 
     opts.on('-h', '--help', 'Display this screen' ) do

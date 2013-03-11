@@ -7,27 +7,34 @@ require 'coffee-script'
 require './models'
 
 get '/' do
-  haml :index, :locals => {:account => Account.find_by_user('oliver.steele@gmail.com')}
+  user = params["user"] || 'oliver.steele@gmail.com'
+  account = Account.find_by_user(user)
+  return "No account for #{user}" unless account
+  haml :index, :locals => {:account => account}
 end
 
 get '/data/contacts.json' do
-  account = Account.find_by_user('oliver.steele@gmail.com')
+  user = params[:user] || 'oliver.steele@gmail.com'
+  account = Account.find_by_user(user)
+  return "No account for #{user}" unless account
   start_date = account.messages.where('date IS NOT NULL AND date > "1975-01-01"').first(:order => :date).date.beginning_of_year
   end_date = account.messages.last(:order => 'date').date
-  start_date = parse_date(params["since"] || params["after"]) if params["since"] or params["after"]
-  end_date = parse_date(params["before"] || params["until"]) if params["before"] or params["until"]
-  limit = (params["limit"] || 20).to_i
+  start_date = parse_date(params[:since] || params[:after]) if params[:since] or params[:after]
+  end_date = parse_date(params[:before] || params[:until]) if params[:before] or params[:until]
+  limit = (params[:limit] || 20).to_i
   stats = {}
   map = {}
+  exceptions = "address NOT LIKE 'steele@%' AND address NOT LIKE 'oliver.steele@%' AND address NOT LIKE 'osteele@%'"
+  exceptions = "address NOT LIKE 'marg@%' AND address NOT LIKE 'margaret.minsky@%'" if user =~ /^margaret\.minsky@/
   while start_date < end_date
     next_date = start_date + 1.week
-    results = Message.connection.select_all(<<-"SQL", nil, [[nil, start_date], [nil, next_date]])
+    results = Message.connection.select_all(<<-"SQL", nil, [[nil, account.id], [nil, start_date], [nil, next_date]])
       SELECT address, addresses.person_id, addresses.id, COUNT(*) AS count FROM addresses
       JOIN message_associations ON address_id=addresses.id
       JOIN messages ON message_id=messages.id
-      WHERE messages.date > $1 AND messages.date < $2
+      WHERE messages.account_id = $1 AND messages.date > $2 AND messages.date < $3
       AND HOST IS NOT NULL
-      AND address NOT LIKE 'steele@%' AND address NOT LIKE 'oliver.steele@%' AND address NOT LIKE 'osteele@%'
+      AND #{exceptions}
       GROUP BY (CASE WHEN addresses.person_id IS NULL THEN addresses.id ELSE addresses.person_id END)
       ORDER BY COUNT(*) DESC
       LIMIT 15
