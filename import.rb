@@ -23,7 +23,7 @@ class MessageImporter
     imap.authenticate('XOAUTH2', email_address, access_token)
     mailbox = @mailbox
     mailbox_names = imap.list("", "*").map(&:name)
-    raise "No mailbox #{mailbox}; valid mailboxes are #{mailbox_names.join(", ")}" unless mailbox in mailbox_names
+    raise "No mailbox #{mailbox}; valid mailboxes are #{mailbox_names.join(", ")}" unless mailbox_names.include?(mailbox)
     imap.select(mailbox)
     yield imap
   ensure

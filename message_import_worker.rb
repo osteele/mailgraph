@@ -17,8 +17,8 @@ class MessageImportWorker
   end
 
   def self.schedule!(options)
-    user = options[:user]
-    account = Account.where(:user => options[:user]).first_or_create!
+    email_address = options[:email_address]
+    account = Account.where(:email_address => options[:email_address]).first_or_create!
     start_date, end_date = MessageImporter.new(options).with_message_ids do |imap, message_ids|
       account.update_attributes :message_count => message_ids.length
       unless message_ids.any?
@@ -37,9 +37,9 @@ class MessageImportWorker
       count += 1
       next_date = start_date + 1.month
       puts "Scheduling from #{start_date} - #{next_date}"
-      options = {:user => user}
-      options[:after] => start_date if count > 1
-      options[:before] => next_date if next_date < end_date
+      options = {:email_address => email_address}
+      options[:after] = start_date if count > 1
+      options[:before] = next_date if next_date < end_date
       Resque.enqueue MessageImportWorker, options
       start_date = next_date
     end
@@ -47,11 +47,11 @@ class MessageImportWorker
 end
 
 def main
-  schedule_options = { :user => 'oliver.steele@gmail.com' }
+  schedule_options = { :email_address => 'oliver.steele@gmail.com' }
 
   OptionParser.new do|opts|
     opts.on('-n', '--limit N', "Limit to N jobs") do |n| schedule_options[:limit] = n.to_i end
-    opts.on('-u', '--user USER') do |user| schedule_options[:user] = user end
+    opts.on('-u', '--user USER') do |user| schedule_options[:email_address] = user end
     opts.on('--inline') do Resque.inline = true end
 
     opts.on('-h', '--help', 'Display this screen' ) do
