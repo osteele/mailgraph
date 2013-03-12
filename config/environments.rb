@@ -3,7 +3,7 @@ require 'active_record'
 RACK_ENV = ENV['RACK_ENV'] || 'development'
 
 ActiveRecord::Base.logger = Logger.new(File.join(File.dirname(__FILE__), '../debug.log')) if RACK_ENV == 'development'
-ActiveRecord::Base.configurations = YAML::load(IO.read(File.join(File.dirname(__FILE__), 'database.yml')))
+ActiveRecord::Base.configurations = YAML::load(ERB.new(IO.read(File.join(File.dirname(__FILE__), 'database.yml'))).result)
 ActiveRecord::Base.establish_connection(RACK_ENV)
 
 # configure :production, :development do
