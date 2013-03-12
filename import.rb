@@ -100,6 +100,7 @@ class MessageImporter
         end
       end
     end
+    Address.combine_addresses!
   end
 
   def add_field!(imap_attribute, record_attribute)

@@ -7,18 +7,16 @@ require 'coffee-script'
 require './models'
 
 get '/' do
-  user = params["user"] || 'oliver.steele@gmail.com'
-  account = Account.find_by_user(user)
-  return "No account for #{user}" unless account
-  haml :index, :locals => {:account => account}
+  return haml :users, :locals => {:users => Account.find(:all)} unless params[:user_id]
+  user = Account.find(params[:user_id])
+  haml :index, :locals => {:account => user, :loading => user.messages.count < user.message_count}
 end
 
 get '/data/contacts.json' do
-  user = params[:user] || 'oliver.steele@gmail.com'
-  account = Account.find_by_user(user)
-  return "No account for #{user}" unless account
-  start_date = account.messages.where('date IS NOT NULL AND date > "1975-01-01"').first(:order => :date).date.beginning_of_year
-  end_date = account.messages.last(:order => 'date').date
+  user = Account.find(params[:user_id])
+  return "No account for #{user}" unless user
+  start_date = user.messages.where('date IS NOT NULL AND date > "1975-01-01"').first(:order => :date).date.beginning_of_year
+  end_date = user.messages.last(:order => 'date').date
   start_date = parse_date(params[:since] || params[:after]) if params[:since] or params[:after]
   end_date = parse_date(params[:before] || params[:until]) if params[:before] or params[:until]
   limit = (params[:limit] || 20).to_i
@@ -26,7 +24,7 @@ get '/data/contacts.json' do
   map = {}
   while start_date < end_date
     next_date = start_date + 1.week
-    results = Message.connection.select_all(<<-"SQL", nil, [[nil, account.id], [nil, start_date], [nil, next_date]])
+    results = Message.connection.select_all(<<-"SQL", nil, [[nil, user.id], [nil, start_date], [nil, next_date]])
       SELECT address, addresses.id, addresses.person_id, COUNT(*) AS count FROM addresses
       JOIN message_associations ON address_id=addresses.id
       JOIN messages ON message_id=messages.id
@@ -58,12 +56,23 @@ get '/data/contacts.json' do
   series.to_json
 end
 
-get '/flow' do
-  haml :flow
+get '/me' do
+  user = Account.find(params[:user_id])
+  address = Address.find(params[:address_id])
+  person = Address.first(:conditions => {:address => user.user})
+  person = Address.find(address.person_id) if address.person_id and address.person_id != address.id
+  Address.update_all({:person_id => person.id}, {:address => address.address})
+  Address.update_all({:person_id => person.id}, {:person_id => address.person_id}) if address.person_id
+  redirect to("/?user_id=#{user.id}")
 end
 
-get "/js/flow.js" do
-  coffee :flow
+get '/flow' do
+  user = Account.find(params[:user_id])
+  haml :flow, :locals => {:user => user}
+end
+
+get "/js/*.coffee.js" do
+  coffee params[:splat].first.to_sym
 end
 
 get(/.+/) do

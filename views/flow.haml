@@ -32,4 +32,6 @@
   %script(src="js/libs/jquery-1.7.2.min.js")
   %script(src="js/libs/bootstrap.min.js")
   %script(src="js/libs/d3.v3.js")
-  %script(src="js/flow.js")
+  %script(type="text/javascript")
+    = "var user = {id: #{user.id}};"
+  %script(src="js/flow.coffee.js")

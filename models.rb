@@ -15,6 +15,14 @@ class Address < ActiveRecord::Base
     name, host = address.split(/@/, 2)
     self.where(:name => address, :address => address, :host => host)
   end
+
+  def self.combine_addresses!
+    Address.connection.execute <<-SQL
+      UPDATE addresses
+      SET person_id = (SELECT (CASE WHEN ad.person_id THEN ad.person_id ELSE ad.id END) AS pid FROM addresses AS ad WHERE ad.address = addresses.address ORDER BY pid LIMIT 1)
+      WHERE person_id IS NULL
+    SQL
+  end
 end
 
 class MessageAssociation < ActiveRecord::Base

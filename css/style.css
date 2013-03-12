@@ -52,4 +52,60 @@ footer p {
   overflow: visible;
 }
 
+.addresses { }
 
+.address {
+  display: block;
+  float: left;
+  position: relative;
+  border-radius: 4px;
+  background: #ccf;
+  margin: 5px;
+  line-height: 1.75;
+  white-space: nowrap;
+  font-size: 12pt;
+  padding: 0 6px;
+  cursor: default;
+  -webkit-transition-duration: .8s;
+  -webkit-transition-timing-function: ease;
+  -webkit-transition-property: opacity;
+}
+
+.addresses:hover .address:hover {
+  opacity: 1;
+}
+
+.addresses:hover .address { opacity: 0.25; }
+
+.hidden {
+  display: none;
+  position: absolute;
+  top: -15px;
+  left: -4px;
+  background: #4f4;
+  color: white;
+  border-radius: 4px;
+  font-size: 10pt;
+  cursor: default;
+  border: 2px solid #4f4;
+  -webkit-transition-duration: .2s;
+  -webkit-transition-timing-function: ease;
+  -webkit-transition-property: all;
+}
+
+.hidden.same-as {
+  left: inherit;
+  right: -2px;
+}
+
+.hidden:hover {
+  top: -4px;
+  border: 2px solid green;
+}
+
+.address:hover .hidden {
+  display: block;
+}
+
+.hidden:before {content: " ";}
+.hidden:after {content: " ";}

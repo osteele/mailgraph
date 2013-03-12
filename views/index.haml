@@ -2,7 +2,7 @@
 %html
   %head
     %meta(charset="utf-8")
-    - if account.messages.count < account.message_count
+    - if loading
       %meta(http-equiv="refresh" content="5")
     %title
       Account Information for
@@ -21,14 +21,20 @@
       #main
         %p
           = account.messages.count.commas
-          of
-          = account.message_count.commas
+          - if loading
+            of
+            = account.message_count.commas
           messages loaded
-          - if true
+          - if loading
             = surround '(', '%)' do
               = '%3.0f' % (100 * account.messages.count / account.message_count)
 
-        %p= account.frequent_correspondents(30).map(&:address).join(", ")
+        %div.addresses
+          - for address in account.frequent_correspondents(30).sort_by { |a| a.address. downcase }
+            %span.address[address]
+              = "#{address.name} &lt;#{address.address}&gt;"
+              %span.hidden.me me!
+              %span.hidden.same-as same as&hellip;
 
       %footer
 
@@ -36,3 +42,6 @@
 
   %script(src="js/libs/jquery-1.7.2.min.js")
   %script(src="js/libs/bootstrap.min.js")
+  %script(type="text/javascript")
+    = "var user = {id: #{account.id}};"
+  %script(src="js/addresses.coffee.js")

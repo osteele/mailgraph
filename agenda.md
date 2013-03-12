@@ -1,5 +1,9 @@
 Next:
-* Combine equivalent email addresses
+* Create a Person
+  * Multiple addresses link to same Person
+  * Person links to canonical address
+  * Account links to Person
+* Default to the most common name as the person's name
 * Allow user to mark email addresses as equivalent
 * Link from home page
 * Filter to direct messages
