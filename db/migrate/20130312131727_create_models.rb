@@ -1,9 +1,5 @@
-require 'active_record'
-require 'sqlite3'
-require 'logger'
-
-class Schema < ActiveRecord::Migration
-  def change
+class CreateModels < ActiveRecord::Migration
+  def up
     create_table :accounts do |t|
       t.string :email_address
       t.integer :message_count
@@ -53,18 +49,7 @@ class Schema < ActiveRecord::Migration
 
     add_index :tokens, :user, :unique => true
   end
-end
 
-class Migration < ActiveRecord::Migration
-  def change
+  def down
   end
-end
-
-if __FILE__ == $0
-  ActiveRecord::Base.logger = Logger.new('debug.log')
-  ActiveRecord::Base.configurations = YAML::load(IO.read('database.yml'))
-  environment = 'development'
-  ActiveRecord::Base.establish_connection(environment)
-  Schema.new.change unless File.exists?('db/data.sqlite3') and ActiveRecord::Base.configurations[environment]['adapter'] == 'sqlite3'
-  Migration.new.change
 end

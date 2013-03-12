@@ -6,11 +6,12 @@ require 'resque/tasks'
 require './app'
 require './import'
 require './message_import_worker'
+require './config/environments'
 
 task "resque:setup" do
   ENV['QUEUE'] = '*'
   Resque.before_fork = Proc.new do
-    ActiveRecord::Base.establish_connection('development')
+    ActiveRecord::Base.establish_connection(RACK_ENV)
     ActiveRecord::Base.verify_active_connections!
   end
 end

@@ -2,10 +2,6 @@ require 'active_record'
 require 'sqlite3'
 require 'logger'
 
-ActiveRecord::Base.logger = Logger.new('debug.log')
-ActiveRecord::Base.configurations = YAML::load(IO.read('database.yml'))
-ActiveRecord::Base.establish_connection('development')
-
 class Address < ActiveRecord::Base
   def self.from_imap_address(address)
     self.where(:display_name => address.name, :spec => "#{address.mailbox}@#{address.host}", :domain_name => address.host).first_or_create
@@ -19,7 +15,7 @@ class Address < ActiveRecord::Base
   def self.combine_addresses!
     Address.connection.execute <<-SQL
       UPDATE addresses
-      SET canonical_address_id = (SELECT (CASE WHEN ad.canonical_address_id THEN ad.canonical_address_id ELSE ad.id END) AS pid FROM addresses AS ad WHERE ad.address = addresses.address ORDER BY pid LIMIT 1)
+      SET canonical_address_id = (SELECT (CASE WHEN ad.canonical_address_id THEN ad.canonical_address_id ELSE ad.id END) AS pid FROM addresses AS ad WHERE ad.spec = addresses.spec ORDER BY pid LIMIT 1)
       WHERE canonical_address_id IS NULL
     SQL
   end

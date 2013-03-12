@@ -1,5 +1,6 @@
 source :rubygems
 gem 'sinatra'
+gem "sinatra-activerecord"
 gem 'sinatra-reloader'
 gem 'thin'
 gem 'coffee-script'

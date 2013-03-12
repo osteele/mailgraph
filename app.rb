@@ -4,6 +4,7 @@ Bundler.require(:default)
 require 'sinatra'
 require 'haml'
 require 'coffee-script'
+require './config/environments'
 require './models'
 require './email_analyzer'
 

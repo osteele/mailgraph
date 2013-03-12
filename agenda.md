@@ -10,10 +10,10 @@ Next:
 * Remove account owner
 
 Deploy:
-* Require sign in
+* Serve oauth from same app
+* Require auth
 * Trigger jobs when user signs in
-* Sweep the cache
-* Cloud database
+* Sweep the cache on update
 
 Later:
 * Serve API via Grape https://github.com/intridea/grape
