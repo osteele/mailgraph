@@ -8,19 +8,19 @@ ActiveRecord::Base.establish_connection('development')
 
 class Address < ActiveRecord::Base
   def self.from_imap_address(address)
-    self.where(:name => address.name, :address => "#{address.mailbox}@#{address.host}", :host => address.host).first_or_create
+    self.where(:display_name => address.name, :spec => "#{address.mailbox}@#{address.host}", :domain_name => address.host).first_or_create
   end
 
   def self.from_string(address)
-    name, host = address.split(/@/, 2)
-    self.where(:name => address, :address => address, :host => host)
+    name, domain_name = address.split(/@/, 2)
+    self.where(:display_name => address, :spec => address, :domain_name => domain_name)
   end
 
   def self.combine_addresses!
     Address.connection.execute <<-SQL
       UPDATE addresses
-      SET person_id = (SELECT (CASE WHEN ad.person_id THEN ad.person_id ELSE ad.id END) AS pid FROM addresses AS ad WHERE ad.address = addresses.address ORDER BY pid LIMIT 1)
-      WHERE person_id IS NULL
+      SET canonical_address_id = (SELECT (CASE WHEN ad.canonical_address_id THEN ad.canonical_address_id ELSE ad.id END) AS pid FROM addresses AS ad WHERE ad.address = addresses.address ORDER BY pid LIMIT 1)
+      WHERE canonical_address_id IS NULL
     SQL
   end
 end
@@ -43,12 +43,12 @@ class Account < ActiveRecord::Base
   def frequent_correspondents(limit=nil)
     limit ||= 15
     addresses = Address.find_by_sql([<<-"SQL", self.id, self.id, limit])
-      SELECT (CASE WHEN person_id THEN person_id ELSE addresses.id END) AS id, COUNT(*) AS count FROM addresses
+      SELECT (CASE WHEN canonical_address_id THEN canonical_address_id ELSE addresses.id END) AS id, COUNT(*) AS count FROM addresses
       JOIN message_associations ON address_id=addresses.id
       JOIN messages ON message_id=messages.id
       WHERE messages.account_id = ?
-      AND HOST IS NOT NULL
-      AND (person_id IS NULL OR person_id != ?)
+      AND domain_name IS NOT NULL
+      AND (canonical_address_id IS NULL OR canonical_address_id != ?)
       GROUP BY id
       ORDER BY COUNT(*) DESC
       LIMIT ?

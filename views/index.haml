@@ -6,7 +6,7 @@
       %meta(http-equiv="refresh" content="5")
     %title
       Account Information for
-      = account.user
+      = user.email_address
     %link(rel="stylesheet" href="css/bootstrap.min.css")
     %link(rel="stylesheet" href="css/style.css")
     %script(src="js/libs/modernizr-2.0.6.min.js")
@@ -15,24 +15,24 @@
     #container.container
       %header
         %h1
-          Account Information for
-          = account.user
+          user Information for
+          = user.email_address
 
       #main
         %p
-          = account.messages.count.commas
+          = user.messages.count.commas
           - if loading
             of
-            = account.message_count.commas
+            = user.message_count.commas
           messages loaded
           - if loading
             = surround '(', '%)' do
-              = '%3.0f' % (100 * account.messages.count / account.message_count)
+              = '%3.0f' % (100 * user.messages.count / user.message_count)
 
         %div.addresses
-          - for address in account.frequent_correspondents(30).sort_by { |a| a.address. downcase }
+          - for address in user.frequent_correspondents(30).sort_by { |a| (a.display_name || a.spec).downcase }
             %span.address[address]
-              = "#{address.name} &lt;#{address.address}&gt;"
+              = "#{address.display_name} &lt;#{address.spec}&gt;"
               %span.hidden.me me!
               %span.hidden.same-as same as&hellip;
 
@@ -43,5 +43,5 @@
   %script(src="js/libs/jquery-1.7.2.min.js")
   %script(src="js/libs/bootstrap.min.js")
   %script(type="text/javascript")
-    = "var user = {id: #{account.id}};"
+    = "var user = {id: #{user.id}};"
   %script(src="js/addresses.coffee.js")

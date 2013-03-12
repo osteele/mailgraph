@@ -46,7 +46,6 @@ auth = CommandLineOAuthHelper.new(['https://mail.google.com/', 'https://www.goog
 data = HTTParty.get("https://www.googleapis.com/oauth2/v1/userinfo", :query => {:alt => :json, :access_token => auth.access_token}).parsed_response
 email = data['email']
 
-record = Token.where(:user => email).first_or_initialize
+record = Token.where(:email_address => email).first_or_initialize
 record.assign_attributes :access_token => auth.access_token, :refresh_token => auth.refresh_token, :expires_at => auth.issued_at + auth.expires_in.seconds
 record.save!
-

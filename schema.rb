@@ -5,22 +5,22 @@ require 'logger'
 class Schema < ActiveRecord::Migration
   def change
     create_table :accounts do |t|
-      t.string :user
+      t.string :email_address
       t.integer :message_count
     end
 
-    add_index :accounts, :user, :unique => true
+    add_index :accounts, :email_address, :unique => true
 
     create_table :addresses do |t|
-      t.string :name
-      t.string :address
-      t.string :host
-      t.integer :person_id, :references => [:addresses, :id]
+      t.string :display_name
+      t.string :spec
+      t.string :domain_name
+      t.integer :canonical_address_id, :references => [:addresses, :id]
     end
 
-    add_index :addresses, :address
-    add_index :addresses, :host
-    add_index :addresses, [:name, :address]
+    add_index :addresses, :spec
+    add_index :addresses, :domain_name
+    add_index :addresses, [:display_name, :spec]
 
     create_table :messages do |t|
       t.integer :account_id, :null => false, :default => 1, :references => [:accounts, :id]

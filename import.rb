@@ -7,20 +7,20 @@ require './models'
 require './patch_imap_for_gmail'
 
 class MessageImporter
-  attr_reader :user
+  attr_reader :email_address
 
   def initialize(options)
-    @user = options[:user]
+    @email_address = options[:email_address]
     @mailbox = options[:mailbox] || '[Gmail]/All Mail'
   end
 
   def with_imap(&block)
     self.renew_access_token!
-    token = Token.find_by_user(user)
-    raise "No token for #{user.inspect}" unless token
+    token = Token.find_by_email_address(email_address)
+    raise "No token for #{email_address.inspect}" unless token
     access_token = token.access_token
     imap = Net::IMAP.new('imap.gmail.com', 993, usessl=true, certs=nil, verify=false)
-    imap.authenticate('XOAUTH2', user, access_token)
+    imap.authenticate('XOAUTH2', email_address, access_token)
     mailbox = @mailbox
     mailbox_names = imap.list("", "*").map(&:name)
     raise "No mailbox #{mailbox}; valid mailboxes are #{mailbox_names.join(", ")}" unless mailbox in mailbox_names
@@ -42,8 +42,8 @@ class MessageImporter
   end
 
   def renew_access_token!
-    token = Token.find_by_user(user)
-    raise "No access token for #{user}" unless token
+    token = Token.find_by_email_address(email_address)
+    raise "No access token for #{email_address}" unless token
     return if token.expires_at > Time.now + 30.seconds
 
     client = Google::APIClient.new
@@ -61,7 +61,7 @@ class MessageImporter
   def import_message_headers!(options={})
     count = 0
     limit = options[:limit]
-    account = Account.where(:user => user).first_or_create!
+    account = Account.where(:email_address => email_address).first_or_create!
     with_message_ids(options) do |imap, message_ids|
       account.update_attributes :message_count => message_ids.length
       message_ids = message_ids.reject { |id| Message.exists?(:account_id => account.id, :uid => id) }
@@ -119,7 +119,7 @@ class MessageImporter
 end
 
 def main
-  options = { :user => 'oliver.steele@gmail.com' }
+  options = { :email_address => 'oliver.steele@gmail.com' }
   import_options = {}
 
   OptionParser.new do|opts|
@@ -128,7 +128,7 @@ def main
     opts.on('--before DATE') do |date| import_options[:before] = date end
     opts.on('-n', '--limit N') do |limit| import_options[:limit] = limit.to_i end
     opts.on('--mailbox MAILBOX') do |mailbox| options[:mailbox] = mailbox end
-    opts.on('-u', '--user USER') do |user| options[:user] = user end
+    opts.on('-u', '--user USER') do |user| options[:email_address] = user end
 
     opts.on('-h', '--help', 'Display this screen' ) do
       puts opts

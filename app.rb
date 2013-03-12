@@ -12,7 +12,7 @@ redis = Redis.new
 get '/' do
   return haml :users, :locals => {:users => Account.find(:all)} unless params[:user_id]
   user = Account.find(params[:user_id])
-  haml :index, :locals => {:account => user, :loading => user.messages.count < user.message_count}
+  haml :index, :locals => {:user => user, :loading => user.messages.count < user.message_count}
 end
 
 get '/flow' do
@@ -43,10 +43,10 @@ end
 get '/me' do
   user = Account.find(params[:user_id])
   address = Address.find(params[:address_id])
-  person = Address.first(:conditions => {:address => user.user})
-  person = Address.find(address.person_id) if address.person_id and address.person_id != address.id
-  Address.update_all({:person_id => person.id}, {:address => address.address})
-  Address.update_all({:person_id => person.id}, {:person_id => address.person_id}) if address.person_id
+  person = Address.first(:conditions => {:address => user.email_address})
+  person = Address.find(address.canonical_address_id) if address.canonical_address_id and address.canonical_address_id != address.id
+  Address.update_all({:canonical_address_id => person.id}, {:address => address.address})
+  Address.update_all({:canonical_address_id => person.id}, {:canonical_address_id => address.canonical_address_id}) if address.canonical_address_id
   redirect to("/?user_id=#{user.id}")
 end
 
