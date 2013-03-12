@@ -1,7 +1,3 @@
-require 'active_record'
-require 'sqlite3'
-require 'logger'
-
 class Address < ActiveRecord::Base
   def self.from_imap_address(address)
     self.where(:display_name => address.name, :spec => "#{address.mailbox}@#{address.host}", :domain_name => address.host).first_or_create
