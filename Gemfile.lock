@@ -164,6 +164,7 @@ DEPENDENCIES
   pg
   pry
   rake
+  redis
   resque
   resque-history
   resque-loner

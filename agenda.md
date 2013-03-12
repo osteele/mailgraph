@@ -14,6 +14,7 @@ Next:
 Deploy:
 * Require sign in
 * Trigger jobs when user signs in
+* Sweep the cache
 * Cloud database
 
 Later:
@@ -22,6 +23,8 @@ Later:
 * message.envelope.in_reply_to
 * Adaptive time periods
 * Update mail messages in background
+* Remove deleted messages
+* Scan multiple folders (and filter by gid)
 
 Publication:
 * http://www.3scale.net/2012/06/the-10-minute-api-up-running-3scale-grape-heroku-api-10-minutes/

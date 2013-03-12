@@ -7,6 +7,8 @@ require 'coffee-script'
 require './models'
 require './email_analyzer'
 
+redis = Redis.new
+
 get '/' do
   return haml :users, :locals => {:users => Account.find(:all)} unless params[:user_id]
   user = Account.find(params[:user_id])
@@ -19,14 +21,23 @@ get '/flow' do
 end
 
 get '/data/contacts.json' do
+  path = request.path
   user = Account.find(params[:user_id])
   return "No account for #{user}" unless user
   start_date = parse_date(params[:since] || params[:after]) if params[:since] or params[:after]
   end_date = parse_date(params[:before] || params[:until]) if params[:before] or params[:until]
   limit = (params[:limit] || 20).to_i
-  series = EmailAnalyzer.new(user).series(start_date, end_date, limit)
+  redis[path] = nil if params.include?("nocache")
+  json = redis[path]
+  # return json.inspect
+  unless json and json != ""
+    series = EmailAnalyzer.new(user).series(start_date, end_date, limit)
+    json = series.to_json
+    redis[path] = json
+    # redis.expire(id, 3600*24*5)
+  end
   content_type :json
-  series.to_json
+  json
 end
 
 get '/me' do
