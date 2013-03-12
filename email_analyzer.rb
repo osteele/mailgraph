@@ -10,15 +10,16 @@ class EmailAnalyzer
     end_date ||= user.messages.last(:order => 'date').date
     stats = {}
     map = {}
+    account_address = Address.find_by_spec(user.email_address).canonicalize
     while start_date < end_date
-      next_date = start_date + 1.week
-      results = Message.connection.select_all(<<-"SQL", nil, [[nil, user.id], [nil, start_date], [nil, next_date]])
+      next_date = start_date + 1.month
+      results = Message.connection.select_all(<<-"SQL", nil, [[nil, user.id], [nil, start_date], [nil, next_date], [nil, account_address.id]])
         SELECT spec, addresses.id, addresses.canonical_address_id, COUNT(*) AS count FROM addresses
         JOIN message_associations ON address_id=addresses.id
         JOIN messages ON message_id=messages.id
         WHERE messages.account_id = $1 AND $2 <= messages.date AND messages.date < $3
         AND domain_name IS NOT NULL
-        AND addresses.id != $1 AND (canonical_address_id IS NULL OR canonical_address_id != $1)
+        AND addresses.id != $4 AND (canonical_address_id IS NULL OR canonical_address_id != $4)
         GROUP BY (CASE WHEN canonical_address_id THEN canonical_address_id ELSE addresses.id END)
         ORDER BY COUNT(*) DESC
         LIMIT 15

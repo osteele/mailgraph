@@ -1,8 +1,6 @@
 Next:
-* Create a Person
-  * Multiple addresses link to same Person
-  * Person links to canonical address
-  * Account links to Person
+* Add link to flow
+* Mute senders
 * Default to the most common name as the person's name
 * Allow user to mark email addresses as equivalent
 * Link from home page

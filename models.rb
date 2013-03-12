@@ -23,6 +23,11 @@ class Address < ActiveRecord::Base
       WHERE canonical_address_id IS NULL
     SQL
   end
+
+  def canonicalize
+    return Address.find(canonical_address_id) if canonical_address_id and canonical_address_id != id
+    return self
+  end
 end
 
 class MessageAssociation < ActiveRecord::Base
@@ -42,7 +47,8 @@ class Account < ActiveRecord::Base
 
   def frequent_correspondents(limit=nil)
     limit ||= 15
-    addresses = Address.find_by_sql([<<-"SQL", self.id, self.id, limit])
+    account_address = Address.find_by_spec(self.email_address).canonicalize
+    addresses = Address.find_by_sql([<<-"SQL", self.id, account_address.id, limit])
       SELECT (CASE WHEN canonical_address_id THEN canonical_address_id ELSE addresses.id END) AS id, COUNT(*) AS count FROM addresses
       JOIN message_associations ON address_id=addresses.id
       JOIN messages ON message_id=messages.id
