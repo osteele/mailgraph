@@ -7,6 +7,7 @@ require 'coffee-script'
 require './config/environments'
 require './models'
 require './email_analyzer'
+require './oauth_routes'
 
 redis = Redis.new
 

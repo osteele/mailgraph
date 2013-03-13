@@ -10,8 +10,7 @@ Next:
 * Remove account owner
 
 Deploy:
-* Serve oauth from same app
-* Require auth
+* Require registered auth
 * Trigger jobs when user signs in
 * Sweep the cache on update
 
