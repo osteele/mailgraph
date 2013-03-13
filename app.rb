@@ -46,7 +46,7 @@ get '/admin/users' do
 end
 
 get '/user/:id' do
-  haml :index, :locals => {:user => @user, :loading => @user.messages.count < @user.message_count}
+  haml :index, :locals => {:user => @user, :loading => @user.message_count && @user.messages.count < @user.message_count}
 end
 
 get '/user/:id/flow' do

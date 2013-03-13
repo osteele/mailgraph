@@ -41,13 +41,13 @@ class CreateModels < ActiveRecord::Migration
     add_index :message_associations, [:message_id, :field]
 
     create_table :tokens do |t|
-      t.string :user, :null => false
+      t.string :email_address, :null => false
       t.string :access_token, :null => false
       t.string :refresh_token, :null => false
       t.datetime :expires_at, :null => false
     end
 
-    add_index :tokens, :user, :unique => true
+    add_index :tokens, :email_address, :unique => true
   end
 
   def down

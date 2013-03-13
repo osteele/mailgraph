@@ -32,8 +32,8 @@ get '/oauth2callback' do
   user = Account.find_by_email_address(email)
   if user
     session[:user_id] = user.id
-    redirect to("/")
+    redirect to('/')
   else
-    render :text => "unknown user #{email}"
+    redirect to('/waitlist')
   end
 end
