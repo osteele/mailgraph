@@ -13,18 +13,21 @@ redis = Redis.new
 enable :sessions
 set :session_secret, "ic8cop5mewm7eb4i"
 
-before '/user/:id' do authenticate! end
-before '/user/:id/*' do authenticate! end
+before '/user/:user_id' do authenticate! end
+before '/user/:user_id/*' do authenticate! end
 before '/admin/*' do authenticate_admin! end
 
 def authenticate!
   @user = Account.find(session[:user_id]) if session[:user_id]
   redirect to("/account/signin") and halt unless @user
+  halt 403 unless params[:user_id] == @user.id.to_s or @user.is_admin
+  @user = Account.find(params[:user_id]) unless params[:user_id] == @user.id
 end
 
 def authenticate_admin!
   @user = Account.find(session[:user_id]) if session[:user_id]
   redirect to("/account/signin") and halt unless @user
+  halt 403 unless @user.is_admin
 end
 
 get '/' do

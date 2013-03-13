@@ -3,6 +3,7 @@ class CreateModels < ActiveRecord::Migration
     create_table :accounts do |t|
       t.string :email_address
       t.integer :message_count
+      t.boolean :is_admin, :null => false, :default => false
     end
 
     add_index :accounts, :email_address, :unique => true
@@ -19,7 +20,7 @@ class CreateModels < ActiveRecord::Migration
     add_index :addresses, [:display_name, :spec]
 
     create_table :messages do |t|
-      t.integer :account_id, :null => false, :default => 1, :references => [:accounts, :id]
+      t.integer :account_id, :null => false, :references => [:accounts, :id]
       t.integer :uid, :null => false
       t.string :subject
       t.datetime :date
