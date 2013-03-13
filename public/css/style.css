@@ -52,7 +52,11 @@ footer p {
   overflow: visible;
 }
 
-.addresses { }
+.signout {
+  position: absolute;
+  top: 5px;
+  right: 10px;
+}
 
 .address {
   display: block;

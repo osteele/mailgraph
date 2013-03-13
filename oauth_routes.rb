@@ -12,11 +12,11 @@ def auth
     :scope => scope)
 end
 
-get '/accounts/signin' do
+get '/account/signin' do
   redirect to(auth.authorization_uri().to_s)
 end
 
-get '/accounts/signout' do
+get '/account/signout' do
   session[:user_id] = nil
   redirect to("/")
 end

@@ -7,15 +7,16 @@
     %title
       Account Information for
       = user.email_address
-    %link(rel="stylesheet" href="css/bootstrap.min.css")
-    %link(rel="stylesheet" href="css/style.css")
-    %script(src="js/libs/modernizr-2.0.6.min.js")
+    %link(rel="stylesheet" href="/css/bootstrap.min.css")
+    %link(rel="stylesheet" href="/css/style.css")
+    %script(src="/js/libs/modernizr-2.0.6.min.js")
 
   %body
     #container.container
       %header
         %h1
           = user.email_address
+        %a.signout(href="/account/signout") Sign Out
 
       #main
         %p
@@ -28,6 +29,8 @@
             = surround '(', '%)' do
               = '%3.0f' % (100 * user.messages.count / user.message_count)
 
+        %p Frequent correspondents
+        %a.clearfix(href="/user/#{user.id}/flow") Contact Stream
         %div.addresses
           - for address in user.frequent_correspondents(40).sort_by { |a| (a.display_name || a.spec).downcase }
             %span.address[address]
@@ -35,12 +38,13 @@
               %span.hidden.me me!
               %span.hidden.same-as same as&hellip;
 
+
       %footer
 
   #legend
 
-  %script(src="js/libs/jquery-1.7.2.min.js")
-  %script(src="js/libs/bootstrap.min.js")
+  %script(src="/js/libs/jquery-1.7.2.min.js")
+  %script(src="/js/libs/bootstrap.min.js")
   %script(type="text/javascript")
     = "var user = {id: #{user.id}};"
-  %script(src="js/addresses.coffee.js")
+  %script(src="/js/addresses.coffee.js")

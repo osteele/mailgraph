@@ -13,22 +13,40 @@ redis = Redis.new
 enable :sessions
 set :session_secret, "ic8cop5mewm7eb4i"
 
+before '/user/:id' do authenticate! end
+before '/user/:id/*' do authenticate! end
+before '/admin/*' do authenticate_admin! end
+
+def authenticate!
+  @user = Account.find(session[:user_id]) if session[:user_id]
+  redirect to("/account/signin") and halt unless @user
+end
+
+def authenticate_admin!
+  @user = Account.find(session[:user_id]) if session[:user_id]
+  redirect to("/account/signin") and halt unless @user
+end
+
 get '/' do
-  redirect to("/accounts/signin") unless session[:user_id]
-  return haml :users, :locals => {:users => Account.find(:all)} unless session[:user_id]
-  user = Account.find(session[:user_id])
-  haml :index, :locals => {:user => user, :loading => user.messages.count < user.message_count}
+  redirect to("/user/#{session[:user_id]}") if session[:user_id]
+  redirect to("/account/signin")
 end
 
-get '/flow' do
-  user = Account.find(sessions[:user_id])
-  haml :flow, :locals => {:user => user}
+get '/admin/users' do
+  return haml :users, :locals => {:users => Account.find(:all)}
 end
 
-get '/data/contacts.json' do
+get '/user/:id' do
+  haml :index, :locals => {:user => @user, :loading => @user.messages.count < @user.message_count}
+end
+
+get '/user/:id/flow' do
+  haml :flow, :locals => {:user => @user}
+end
+
+get '/user/:id/contacts.json' do
   path = request.path
-  user = Account.find(sessions[:user_id])
-  return "No account for #{user}" unless user
+  return "No account for #{user}" unless @user
   start_date = parse_date(params[:since] || params[:after]) if params[:since] or params[:after]
   end_date = parse_date(params[:before] || params[:until]) if params[:before] or params[:until]
   limit = (params[:limit] || 20).to_i
@@ -36,7 +54,7 @@ get '/data/contacts.json' do
   json = redis[path]
   # return json.inspect
   unless json and json != ""
-    series = EmailAnalyzer.new(user).series(start_date, end_date, limit)
+    series = EmailAnalyzer.new(@user).series(start_date, end_date, limit)
     json = series.to_json
     redis[path] = json
     # redis.expire(id, 3600*24*5)
@@ -45,15 +63,13 @@ get '/data/contacts.json' do
   json
 end
 
-get '/me' do
-  redirect to("/accounts/signin") unless session[:user_id]
-  user = Account.find(session[:user_id])
+get '/user/:id/me' do
   address = Address.find(params[:address_id])
-  person = Address.first(:conditions => {:address => user.email_address})
+  person = Address.first(:conditions => {:address => @user.email_address})
   person = Address.find(address.canonical_address_id) if address.canonical_address_id and address.canonical_address_id != address.id
   Address.update_all({:canonical_address_id => person.id}, {:address => address.address})
   Address.update_all({:canonical_address_id => person.id}, {:canonical_address_id => address.canonical_address_id}) if address.canonical_address_id
-  redirect to("/?user_id=#{user.id}")
+  redirect to("/user/#{user.id}")
 end
 
 get "/js/*.coffee.js" do

@@ -384,4 +384,4 @@ $ ->
     transitionTo(id)
 
   # load the data and call 'display'
-  d3.json "data/contacts.json" + document.location.search, display
+  d3.json "/user/#{user.id}/contacts.json" + document.location.search, display
