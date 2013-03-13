@@ -1,4 +1,3 @@
-# http://th3silverlining.com/lll12/04/22/using-the-heroku-shared-database-with-sinatra-and-active-record/
 require "bundler/setup"
 Bundler.require(:default)
 require 'sinatra'
@@ -11,20 +10,24 @@ require './oauth_routes'
 
 redis = Redis.new
 
+enable :sessions
+set :session_secret, "ic8cop5mewm7eb4i"
+
 get '/' do
-  return haml :users, :locals => {:users => Account.find(:all)} unless params[:user_id]
-  user = Account.find(params[:user_id])
+  redirect to("/accounts/signin") unless session[:user_id]
+  return haml :users, :locals => {:users => Account.find(:all)} unless session[:user_id]
+  user = Account.find(session[:user_id])
   haml :index, :locals => {:user => user, :loading => user.messages.count < user.message_count}
 end
 
 get '/flow' do
-  user = Account.find(params[:user_id])
+  user = Account.find(sessions[:user_id])
   haml :flow, :locals => {:user => user}
 end
 
 get '/data/contacts.json' do
   path = request.path
-  user = Account.find(params[:user_id])
+  user = Account.find(sessions[:user_id])
   return "No account for #{user}" unless user
   start_date = parse_date(params[:since] || params[:after]) if params[:since] or params[:after]
   end_date = parse_date(params[:before] || params[:until]) if params[:before] or params[:until]
@@ -43,7 +46,8 @@ get '/data/contacts.json' do
 end
 
 get '/me' do
-  user = Account.find(params[:user_id])
+  redirect to("/accounts/signin") unless session[:user_id]
+  user = Account.find(session[:user_id])
   address = Address.find(params[:address_id])
   person = Address.first(:conditions => {:address => user.email_address})
   person = Address.find(address.canonical_address_id) if address.canonical_address_id and address.canonical_address_id != address.id

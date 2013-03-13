@@ -1,4 +1,6 @@
 Next:
+* Add sign out
+* Add admin page
 * Add link to flow
 * Mute senders
 * Default to the most common name as the person's name
@@ -8,9 +10,6 @@ Next:
 * Switch between senders and recipients
 * Select time window
 * Remove account owner
-
-Deploy:
-* Require registered auth
 * Trigger jobs when user signs in
 * Sweep the cache on update
 
