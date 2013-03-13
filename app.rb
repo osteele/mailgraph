@@ -20,19 +20,25 @@ before '/admin/*' do authenticate_admin! end
 def authenticate!
   @user = Account.find(session[:user_id]) if session[:user_id]
   redirect to("/account/signin") and halt unless @user
-  halt 403 unless params[:user_id] == @user.id.to_s or @user.is_admin
+  redirect to("/waitlist") and halt unless @user.active
+  halt 403 unless params[:user_id] == @user.id.to_s or @user.admin
   @user = Account.find(params[:user_id]) unless params[:user_id] == @user.id
 end
 
 def authenticate_admin!
   @user = Account.find(session[:user_id]) if session[:user_id]
   redirect to("/account/signin") and halt unless @user
-  halt 403 unless @user.is_admin
+  halt 403 unless @user.admin
 end
 
 get '/' do
   redirect to("/user/#{session[:user_id]}") if session[:user_id]
   redirect to("/account/signin")
+end
+
+get '/waitlist' do
+  session[:user_id] = nil
+  haml :waitlist
 end
 
 get '/admin/users' do

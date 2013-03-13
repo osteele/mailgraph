@@ -3,7 +3,6 @@ class CreateModels < ActiveRecord::Migration
     create_table :accounts do |t|
       t.string :email_address
       t.integer :message_count
-      t.boolean :is_admin, :null => false, :default => false
     end
 
     add_index :accounts, :email_address, :unique => true

@@ -1,5 +1,4 @@
 Next:
-* Require whitelisted user
 * Default to the most common name as the person's name
 * Allow user to mark email addresses as equivalent
 * Tag cloud
