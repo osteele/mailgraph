@@ -1,19 +1,32 @@
 require 'google/api_client'
 require 'google/api_client/client_secrets'
 
-def auth
-  scope = ['https://mail.google.com/', 'https://www.googleapis.com/auth/userinfo.email']
+def auth(options)
+  options = {:request => options} if options.is_a?(Sinatra::Request)
+  scope = options[:scope] || ['https://mail.google.com/', 'https://www.googleapis.com/auth/userinfo.email']
+  redirect_uri = options[:redirect_uri]
+  redirect_uri ||= "#{options[:request].scheme}://#{options[:request].host_with_port}/oauth2callback" if options[:request]
   Signet::OAuth2::Client.new(
     :authorization_uri => "https://accounts.google.com/o/oauth2/auth",
     :token_credential_uri => "https://accounts.google.com/o/oauth2/token",
-    :client_id => ENV['GOOGLE_OAUTH_CLIENT_ID'] || "641654287458-ftci0053g696ods8r6j0bvjadcsumlub.apps.googleusercontent.com",
-    :client_secret => ENV['GOOGLE_OAUTH_CLIENT_SECRET'] || "pyaC6-Qjaji1Zx1otZKsb82b",
-    :redirect_uri => "#{ENV['GOOGLE_OAUTH_ORIGIN'] || 'http://localhost:3000'}/oauth2callback",
+    :client_id => google_oauth_client_id,
+    :client_secret => google_oauth_client_secret,
+    :redirect_uri => redirect_uri,
     :scope => scope)
 end
 
+def google_oauth_client_id
+  ENV['GOOGLE_OAUTH_CLIENT_ID'] || "641654287458-ftci0053g696ods8r6j0bvjadcsumlub.apps.googleusercontent.com"
+end
+
+def google_oauth_client_secret
+  ENV['GOOGLE_OAUTH_CLIENT_SECRET'] || "pyaC6-Qjaji1Zx1otZKsb82b"
+end
+
+
 get '/account/signin' do
-  redirect to(auth.authorization_uri().to_s)
+  oauth_uri = auth(request).authorization_uri
+  redirect to(oauth_uri.to_s)
 end
 
 get '/account/signout' do
@@ -22,7 +35,7 @@ get '/account/signout' do
 end
 
 get '/oauth2callback' do
-  auth = auth()
+  auth = auth(request)
   auth.code = params[:code]
   auth.fetch_access_token!
   data = HTTParty.get("https://www.googleapis.com/oauth2/v1/userinfo", :query => {:alt => :json, :access_token => auth.access_token}).parsed_response
