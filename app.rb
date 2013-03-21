@@ -7,6 +7,7 @@ require './config/environments'
 require './models'
 require './email_analyzer'
 require './oauth_routes'
+require './assets'
 
 redis = Redis.new
 
@@ -79,10 +80,6 @@ get '/user/:id/me' do
   Address.update_all({:canonical_address_id => person.id}, {:address => address.address})
   Address.update_all({:canonical_address_id => person.id}, {:canonical_address_id => address.canonical_address_id}) if address.canonical_address_id
   redirect to("/user/#{user.id}")
-end
-
-get "/js/*.coffee.js" do
-  coffee params[:splat].first.to_sym
 end
 
 class Fixnum

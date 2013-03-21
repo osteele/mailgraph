@@ -1,4 +1,6 @@
 source 'https://rubygems.org'
+ruby '1.9.3'
+
 gem 'sinatra'
 gem "sinatra-activerecord"
 gem 'sinatra-reloader'
@@ -15,6 +17,11 @@ gem 'google-api-client'
 gem 'httparty'
 gem 'chronic'
 gem 'redis'
+gem 'sprockets'
+# gem 'sprockets-helpers'
+# gem 'sprockets-sass'
+# gem 'yui-compressor'
+# gem 'uglifier'
 
 group :development, :test do
   gem 'pg' # this gem is required to use postgres on Heroku

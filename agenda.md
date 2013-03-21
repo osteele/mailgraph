@@ -1,4 +1,6 @@
 Next:
+* Bower
+* Sass
 * Default to the most common name as the person's name
 * Allow user to mark email addresses as equivalent
 * Tag cloud
@@ -12,6 +14,7 @@ Next:
 * Sweep the cache on update
 
 Later:
+* Asset compression
 * Serve API via Grape https://github.com/intridea/grape
 * Marker for which months have been completed?
 * message.envelope.in_reply_to
