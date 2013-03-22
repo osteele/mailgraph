@@ -20,7 +20,7 @@ class EmailAnalyzer
         WHERE messages.account_id = $1 AND $2 <= messages.date AND messages.date < $3
         AND domain_name IS NOT NULL
         AND addresses.id != $4 AND (canonical_address_id IS NULL OR canonical_address_id != $4)
-        GROUP BY (CASE WHEN canonical_address_id THEN canonical_address_id ELSE addresses.id END)
+        GROUP BY (CASE WHEN canonical_address_id IS NOT NULL THEN canonical_address_id ELSE addresses.id END)
         ORDER BY COUNT(*) DESC
         LIMIT 15
       SQL

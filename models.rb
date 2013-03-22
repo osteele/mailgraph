@@ -41,13 +41,14 @@ class Account < ActiveRecord::Base
     limit ||= 15
     account_address = Address.find_or_create_by_spec(self.email_address).canonicalize
     addresses = Address.find_by_sql([<<-"SQL", self.id, account_address.id, limit])
-      SELECT (CASE WHEN canonical_address_id THEN canonical_address_id ELSE addresses.id END) AS id, COUNT(*) AS count FROM addresses
+      SELECT (CASE WHEN canonical_address_id IS NOT NULL THEN canonical_address_id ELSE addresses.id END) AS id, COUNT(*) AS count
+      FROM addresses
       JOIN message_associations ON address_id=addresses.id
       JOIN messages ON message_id=messages.id
       WHERE messages.account_id = ?
       AND domain_name IS NOT NULL
       AND (canonical_address_id IS NULL OR canonical_address_id != ?)
-      GROUP BY id
+      GROUP BY addresses.id
       ORDER BY COUNT(*) DESC
       LIMIT ?
     SQL
