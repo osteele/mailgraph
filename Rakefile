@@ -1,6 +1,7 @@
 require "bundler/setup"
 Bundler.require(:default)
 require 'sinatra/activerecord/rake'
+require 'rake/sprocketstask'
 require 'resque/tasks'
 #require 'resque_scheduler/tasks'
 require './app'
@@ -23,5 +24,15 @@ task :schedule_and_work do
   else
     sh "rake resque:scheduler"
     Process.wait
+  end
+end
+
+namespace :assets do
+  task :precompile => "bower:install"
+end
+
+namespace :bower do
+  task :install do
+    sh 'bower install'
   end
 end
