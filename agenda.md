@@ -1,7 +1,8 @@
 Next:
-* Sass
-* Default to the most common name as the person's name
+* Heroku login
+* Update mail on login
 * Allow user to mark email addresses as equivalent
+* Default to the most common name as the person's name
 * Tag cloud for senders
 * Mute senders
 * Link from home page
@@ -13,6 +14,11 @@ Next:
 * Sweep the cache on update
 
 Later:
+* Use contacts to consolidate addresses
+* Landing page that doesn't force login
+* More graph types
+* Show “other”
+* Sass
 * Asset compression
 * Serve API via Grape https://github.com/intridea/grape
 * Marker for which months have been completed?
@@ -21,6 +27,10 @@ Later:
 * Update mail messages in background
 * Remove deleted messages
 * Scan multiple folders (and filter by gid)
+
+Future:
+* Index messages
+* Sentiment analysis
 
 API Publication:
 * http://www.3scale.net/2012/06/the-10-minute-api-up-running-3scale-grape-heroku-api-10-minutes/
