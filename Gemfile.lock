@@ -161,6 +161,7 @@ DEPENDENCIES
   activesupport
   chronic
   coffee-script
+  execjs
   foreman
   gmail
   gmail_xoauth

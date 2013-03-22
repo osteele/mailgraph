@@ -33,6 +33,6 @@ end
 
 namespace :bower do
   task :install do
-    sh 'bower install'
+    sh "bower install"
   end
 end

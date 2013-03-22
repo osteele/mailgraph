@@ -1,6 +1,7 @@
 source 'https://rubygems.org'
 ruby '1.9.3'
 
+gem 'execjs'
 gem 'sinatra'
 gem "sinatra-activerecord"
 gem 'sinatra-reloader'
