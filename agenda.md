@@ -1,5 +1,5 @@
-Next:
-* Heroku login
+# Next
+* Run on Heroku
 * Update mail on login
 * Allow user to mark email addresses as equivalent
 * Default to the most common name as the person's name
@@ -13,7 +13,7 @@ Next:
 * Trigger jobs when user signs in
 * Sweep the cache on update
 
-Later:
+# Later
 * Use contacts to consolidate addresses
 * Landing page that doesn't force login
 * More graph types
@@ -28,16 +28,28 @@ Later:
 * Remove deleted messages
 * Scan multiple folders (and filter by gid)
 
-Future:
+# Future
 * Index messages
 * Sentiment analysis
 
-API Publication:
+# Notes
+
+## Run on Heroku
+
+Alternatives:
+1. Install npm on heroku.
+2. Rewrite the front end in nodejs.
+3. Move the front end to meteor.
+4. Commit the bower files.
+5. Switch back from bower.
+
+## API Publication
 * http://www.3scale.net/2012/06/the-10-minute-api-up-running-3scale-grape-heroku-api-10-minutes/
 * https://github.com/3scale/3scale_ws_api_for_ruby
 * https://support.3scale.net/quickstarts/hello-world-api
 
-Asset compression:
+## Asset compression
+
     require "yui/compressor"
     settings.assets.js_compressor  = YUI::JavaScriptCompressor.new
     settings.assets.css_compressor = YUI::CssCompressor.new
