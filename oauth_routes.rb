@@ -6,6 +6,7 @@ def auth(options)
   scope = options[:scope] || ['https://mail.google.com/', 'https://www.googleapis.com/auth/userinfo.email']
   redirect_uri = options[:redirect_uri]
   redirect_uri ||= "#{options[:request].scheme}://#{options[:request].host_with_port}/oauth2callback" if options[:request]
+  redirect_uri += "?redirect_to=#{URI.encode(options[:redirect_to])}" if options[:redirect_to]
   Signet::OAuth2::Client.new(
     :authorization_uri => "https://accounts.google.com/o/oauth2/auth",
     :token_credential_uri => "https://accounts.google.com/o/oauth2/token",
@@ -25,7 +26,13 @@ end
 
 
 get '/account/signin' do
-  oauth_uri = auth(request).authorization_uri
+  if request.env['SERVER_NAME'] =~ /\.dev$/
+    redirect = "#{request.scheme}://#{request.host_with_port}/account/signin/proxy_receiver"
+    redirect to("#{request.scheme}://localhost:#{request.path}?redirect_to=#{URI.encode(redirect)}")
+    return
+  end
+  redirect_to = request.env['SERVER_NAME'] == 'localhost' ? params['redirect_to'] : nil
+  oauth_uri = auth(:request => request, :redirect_to => redirect_to).authorization_uri
   redirect to(oauth_uri.to_s)
 end
 
@@ -43,10 +50,22 @@ get '/oauth2callback' do
   record = Token.where(:email_address => email).first_or_initialize
   record.update_attributes :access_token => auth.access_token, :refresh_token => auth.refresh_token, :expires_at => auth.issued_at + auth.expires_in.seconds
   user = Account.find_by_email_address(email)
+  if request.env['SERVER_NAME'] == 'localhost' and params['redirect_to']
+    url = params['redirect_to']
+    url += "?user_id=#{URI.encode(user.id)}" if user
+    return url
+    return
+  end
   if user
     session[:user_id] = user.id
     redirect to('/')
   else
     redirect to('/waitlist')
   end
+end
+
+get '/account/signin/proxy_receiver' do
+  return 500 unless request.env['SERVER_NAME'] =~ /.dev$/ and params[:user_id]
+  session[:user_id] = params[:user_id]
+  redirect to('/')
 end
