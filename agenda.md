@@ -1,47 +1,78 @@
 # Next
-* Run on Heroku
-* Update mail on login
+* Add Sent messages
+* Consolidate addresses
+* Update messages
 * Allow user to mark email addresses as equivalent
-* Default to the most common name as the person's name
-* Tag cloud for senders
-* Mute senders
-* Link from home page
 * Filter to direct messages
 * Switch between senders and recipients
-* Select time window
-* Remove account owner
-* Trigger jobs when user signs in
 * Sweep the cache on update
 
-# Later
-* Use contacts to consolidate addresses
+# Future
+## Public
+* Update mail on login
+* Update mail messages in background
+* Link from home page
 * Landing page that doesn't force login
-* More graph types
-* Show “other”
+* Warn if folders list doesn't include All
+* ToS, Privacy
+* Wait List
+
+## Data Quality
+* Default to the most common name as the person's name
+* Remove deleted messages
+* Scan multiple folders (and filter by gid)
+
+## Features
+* Mute senders
+* Index messages
+* Sentiment analysis
+
+## Presentation
+* Tag cloud
+  * Add size
+  * Sort by frequency, name, last contact
+  * Filter by sender, recipient, timespan
+* Stream graph
+  * Filter by sender, recipient, timespan
+* More analogs http://betabeers.com/uploads/estudios/crunchbase-startup-data/?
+  * Bar char: Incoming vs. Outgoing by year
+  * Pie char: Top Senders 2012 [choose year]; Top Recipients 2012
+  * Tables: Top correspondents by year [range of years]
+
+## Architecture
+* Separate into API server and angular / derby
+  http://briantford.com/blog/angular-phonegap.html
 * Sass
 * Asset compression
 * Serve API via Grape https://github.com/intridea/grape
 * Marker for which months have been completed?
 * message.envelope.in_reply_to
 * Adaptive time periods
-* Update mail messages in background
-* Remove deleted messages
-* Scan multiple folders (and filter by gid)
-
-# Future
-* Index messages
-* Sentiment analysis
 
 # Notes
 
-## Run on Heroku
+## Consolidate Addresses
+### Contacts
+* Add contacts to scope
+* Try gems:
+  https://github.com/mislav/contacts
+  https://github.com/pelle/portablecontacts
+  https://github.com/Placester/google-contacts
+* Retrieve my contacts
+* Retrieve email addresses for each contact
+* Build a join table: email address <-> contact
+* For each email address that is joined to only one contact, join it to the person for that contact
+* View senders again
 
-Alternatives:
-1. Install npm on heroku.
-2. Rewrite the front end in nodejs.
-3. Move the front end to meteor.
-4. Commit the bower files.
-5. Switch back from bower.
+### Heuristics
+* Scan the senders in the Sent folder
+* Offer these as obsolete synonyms for the account holder
+
+### Manual
+* Drag and drop within the tag cloud
+
+## Update Messages
+* Scan all the gmail addresses, delete if not in All
 
 ## API Publication
 * http://www.3scale.net/2012/06/the-10-minute-api-up-running-3scale-grape-heroku-api-10-minutes/
