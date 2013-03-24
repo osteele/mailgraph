@@ -1,10 +1,9 @@
-require 'pp'
-require './app'
 require 'mail'
-require 'google/api_client'
 require 'active_support'
+require './app'
 require './models'
 require './patch_imap_for_gmail'
+require './oauth_utils'
 
 class MessageImporter
   attr_reader :email_address
@@ -15,14 +14,12 @@ class MessageImporter
   end
 
   def with_imap(&block)
-    self.renew_access_token!
-    token = Token.find_by_email_address(email_address)
-    raise "No token for #{email_address.inspect}" unless token
-    access_token = token.access_token
+    access_token = GoogleOAuthToken::find_access_token_by_email_address(email_address)
+    # TODO pool imap connections
     imap = Net::IMAP.new('imap.gmail.com', 993, usessl=true, certs=nil, verify=false)
     imap.authenticate('XOAUTH2', email_address, access_token)
     mailbox = @mailbox
-    mailbox_names = imap.list("", "*").map(&:name)
+    mailbox_names = imap.list('', '*').map(&:name)
     raise "No mailbox #{mailbox}; valid mailboxes are #{mailbox_names.join(", ")}" unless mailbox_names.include?(mailbox)
     imap.select(mailbox)
     yield imap
@@ -39,23 +36,6 @@ class MessageImporter
       message_ids = imap.search(search_options)
       yield imap, message_ids
     end
-  end
-
-  def renew_access_token!
-    token = Token.find_by_email_address(email_address)
-    raise "No access token for #{email_address}" unless token
-    return if token.expires_at > Time.now + 30.seconds
-
-    client = Google::APIClient.new
-    auth = client.authorization
-    auth.client_id = '641654287458-oq3atarvk2lm55ld2qt2ektmm8nrs3a7.apps.googleusercontent.com'
-    auth.client_secret = 'xHdPdx_bZi6rPFla0-sFPery'
-    auth.redirect_uri = "urn:ietf:oauth:2.0:oob"
-    auth.scope = ['https://mail.google.com/', 'https://www.googleapis.com/auth/userinfo.email']
-
-    auth.update_token! :access_token => token.access_token, :refresh_token => token.refresh_token #, :expires_at => Time.now - 1.minute
-    auth.fetch_access_token!
-    token.update_attributes :access_token => auth.access_token, :expires_at => auth.issued_at + auth.expires_in.seconds
   end
 
   def import_message_headers!(options={})

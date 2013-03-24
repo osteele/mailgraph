@@ -1,4 +1,6 @@
 require 'active_record'
+require 'logger'
+require 'erb'
 
 RACK_ENV = ENV['RACK_ENV'] || 'development'
 

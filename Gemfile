@@ -23,6 +23,7 @@ gem 'sprockets'
 # gem 'sprockets-sass'
 # gem 'yui-compressor'
 # gem 'uglifier'
+gem 'nokogiri'
 
 group :development, :test do
   gem 'pg' # this gem is required to use postgres on Heroku

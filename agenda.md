@@ -26,6 +26,7 @@
 * Mute senders
 * Index messages
 * Sentiment analysis
+* Contacts https://developers.google.com/google-apps/contacts/v3/#retrieving_contacts_using_query_parameters
 
 ## Presentation
 * Tag cloud
@@ -53,13 +54,6 @@
 
 ## Consolidate Addresses
 ### Contacts
-* Add contacts to scope
-* Try gems:
-  https://github.com/mislav/contacts
-  https://github.com/pelle/portablecontacts
-  https://github.com/Placester/google-contacts
-* Retrieve my contacts
-* Retrieve email addresses for each contact
 * Build a join table: email address <-> contact
 * For each email address that is joined to only one contact, join it to the person for that contact
 * View senders again

@@ -1,9 +1,18 @@
 require 'google/api_client'
 require 'google/api_client/client_secrets'
 
+DEFAULT_GOOGLE_OAUTH_SCOPES = [
+  'https://mail.google.com/',
+  'https://www.googleapis.com/auth/userinfo.email',
+  'https://www.google.com/m8/feeds'
+]
+
+DEFAULT_GOOGLE_OAUTH_CLIENT_ID = '641654287458-ftci0053g696ods8r6j0bvjadcsumlub.apps.googleusercontent.com'
+DEFAULT_GOOGLE_OAUTH_CLIENT_SECRET = 'pyaC6-Qjaji1Zx1otZKsb82b'
+
 def auth(options)
   options = {:request => options} if options.is_a?(Sinatra::Request)
-  scope = options[:scope] || ['https://mail.google.com/', 'https://www.googleapis.com/auth/userinfo.email']
+  scope = options[:scope] || DEFAULT_GOOGLE_OAUTH_SCOPES
   redirect_uri = options[:redirect_uri]
   redirect_uri ||= "#{options[:request].scheme}://#{options[:request].host_with_port}/oauth2callback" if options[:request]
   redirect_uri += "?redirect_to=#{URI.encode(options[:redirect_to])}" if options[:redirect_to]
@@ -17,11 +26,11 @@ def auth(options)
 end
 
 def google_oauth_client_id
-  ENV['GOOGLE_OAUTH_CLIENT_ID'] || "641654287458-ftci0053g696ods8r6j0bvjadcsumlub.apps.googleusercontent.com"
+  ENV['GOOGLE_OAUTH_CLIENT_ID'] || DEFAULT_GOOGLE_OAUTH_CLIENT_ID
 end
 
 def google_oauth_client_secret
-  ENV['GOOGLE_OAUTH_CLIENT_SECRET'] || "pyaC6-Qjaji1Zx1otZKsb82b"
+  ENV['GOOGLE_OAUTH_CLIENT_SECRET'] || DEFAULT_GOOGLE_OAUTH_CLIENT_SECRET
 end
 
 
