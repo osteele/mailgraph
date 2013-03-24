@@ -1,7 +1,7 @@
 require 'resque'
 # require 'resque-retry'
 require "resque-loner"
-require "./import"
+require "./import_messages"
 
 class MessageImportWorker
   include Resque::Plugins::UniqueJob
