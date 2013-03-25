@@ -1,20 +1,20 @@
 # Next
+* Index by message id
 * Add Sent messages
 * Consolidate addresses
-* Update messages
-* Allow user to mark email addresses as equivalent
-* Filter to direct messages
+* Tag cloud
+* Update messages; sweep the cache
+* Select year
 * Switch between senders and recipients
-* Sweep the cache on update
 
-# Future
 ## Public
 * Update mail on login
 * Update mail messages in background
-* Link from home page
-* Landing page that doesn't force login
+* Landing page doesn't force login
+* Separate login from authentication
+* Explain why permissions are requested
 * Warn if folders list doesn't include All
-* ToS, Privacy
+* ToS, Privacy, Contact
 * Wait List
 
 ## Data Quality
@@ -22,35 +22,25 @@
 * Remove deleted messages
 * Scan multiple folders (and filter by gid)
 
-## Features
-* Mute senders
-* Index messages
-* Sentiment analysis
-* Contacts https://developers.google.com/google-apps/contacts/v3/#retrieving_contacts_using_query_parameters
-
-## Presentation
-* Tag cloud
-  * Add size
-  * Sort by frequency, name, last contact
-  * Filter by sender, recipient, timespan
-* Stream graph
-  * Filter by sender, recipient, timespan
-* More analogs http://betabeers.com/uploads/estudios/crunchbase-startup-data/?
-  * Bar char: Incoming vs. Outgoing by year
-  * Pie char: Top Senders 2012 [choose year]; Top Recipients 2012
-  * Tables: Top correspondents by year [range of years]
-
 ## Architecture
-* Separate into API server and angular / derby
+* Rewrite client in angular / derby
   http://briantford.com/blog/angular-phonegap.html
 * Sass
 * Asset compression
-* Serve API via Grape https://github.com/intridea/grape
-* Marker for which months have been completed?
 * message.envelope.in_reply_to
 * Adaptive time periods
 
 # Notes
+
+## Index by Message ID
+* What to do with bogus or duplicate message_id? -- is there a In-Reply-To or References?
+* Store, index on envelope.message_id
+* Add store, message.uidvalidity; index on account, uid, uidvalidity
+* Store actual uid message.attr['UID'] instead of sequence number
+* Only filter ids where mailbox, uidvalidity match
+* When found a mailbox, update uid and uidvalidity
+* Add table (account, mailbox, UIDVALIDITY, message_count)
+* Move message_count from user, sum from user's mailboxes
 
 ## Consolidate Addresses
 ### Contacts
@@ -68,10 +58,12 @@
 ## Update Messages
 * Scan all the gmail addresses, delete if not in All
 
-## API Publication
-* http://www.3scale.net/2012/06/the-10-minute-api-up-running-3scale-grape-heroku-api-10-minutes/
-* https://github.com/3scale/3scale_ws_api_for_ruby
-* https://support.3scale.net/quickstarts/hello-world-api
+## API Server
+* Grape https://github.com/intridea/grape
+* Publication
+  * http://www.3scale.net/2012/06/the-10-minute-api-up-running-3scale-grape-heroku-api-10-minutes/
+  * https://github.com/3scale/3scale_ws_api_for_ruby
+  * https://support.3scale.net/quickstarts/hello-world-api
 
 ## Asset compression
 

@@ -1,16 +1,25 @@
 require 'mail'
+require 'pp'
 require 'active_support'
 require './app'
 require './models'
 require './patch_imap_for_gmail'
 require './oauth_utils'
+require './utils'
 
 class MessageImporter
-  attr_reader :email_address
+  include Logging
+  attr_reader :email_address, :mailbox_name
 
   def initialize(options)
     @email_address = options[:email_address]
-    @mailbox = options[:mailbox] || '[Gmail]/All Mail'
+    @mailbox_name = options[:mailbox_name] || :All #'[Gmail]/All Mail'
+  end
+
+  def mailboxes
+    with_imap do |imap|
+      return imap.list('', '*')
+    end
   end
 
   def with_imap(&block)
@@ -18,13 +27,23 @@ class MessageImporter
     # TODO pool imap connections
     imap = Net::IMAP.new('imap.gmail.com', 993, usessl=true, certs=nil, verify=false)
     imap.authenticate('XOAUTH2', email_address, access_token)
-    mailbox = @mailbox
-    mailbox_names = imap.list('', '*').map(&:name)
-    raise "No mailbox #{mailbox}; valid mailboxes are #{mailbox_names.join(", ")}" unless mailbox_names.include?(mailbox)
-    imap.select(mailbox)
     yield imap
   ensure
     imap.expunge rescue nil
+  end
+
+  def with_mailbox(&block)
+    with_imap do |imap|
+      mailboxes = imap.list('', '*')
+      mailbox = case mailbox_name
+          when Symbol then mailboxes.find { |m| m.attr.include?(mailbox_name) }
+          when String then mailboxes.find { |m| m.name == mailbox_name }
+          else raise "Program error: can't search for mailbox #{mailbox_name.inspect} #{mailbox_name.class}"
+        end
+      raise "No mailbox #{mailbox_name}; valid mailboxes are #{mailboxes.map(&:name).join(", ")}" unless mailbox
+      imap.select(mailbox.name)
+      yield imap
+    end
   end
 
   def with_message_ids(options={}, &block)
@@ -32,7 +51,8 @@ class MessageImporter
     search_options += ['BEFORE', Net::IMAP.format_datetime(Date.parse(options[:before]))] if options[:before]
     search_options += ['SINCE', Net::IMAP.format_datetime(Date.parse(options[:after]))] if options[:after]
     search_options << 'ALL' unless search_options.any?
-    with_imap do |imap|
+    with_mailbox do |imap|
+      logger.info "Searching mailbox #{mailbox_name} for #{search_options.inspect}"
       message_ids = imap.search(search_options)
       yield imap, message_ids
     end
@@ -43,28 +63,28 @@ class MessageImporter
     limit = options[:limit]
     account = Account.where(:email_address => email_address).first_or_create!
     with_message_ids(options) do |imap, message_ids|
-      account.update_attributes :message_count => message_ids.length
-      message_ids = message_ids.reject { |id| Message.exists?(:account_id => account.id, :uid => id) }
-      puts "Retrieving #{message_ids.length} headers"
+      logger.info "Retrieving #{message_ids.length} messages"
       message_ids.each_slice(1000) do |slice_ids|
         break if limit and count >= limit
-        for message in (imap.fetch(slice_ids, ['ENVELOPE', 'X-GM-MSGID', 'X-GM-THRID']) || [])
+        logger.info "Fetching messages #{slice_ids.first}..#{slice_ids.last}" if slice_ids.any?
+        for message in (imap.fetch(slice_ids, ['ENVELOPE', 'UID', 'X-GM-MSGID', 'X-GM-THRID']) || [])
           break if limit and count >= limit
           count += 1
-          message_id = message.seqno
+          next if Message.exists?(:account_id => account.id, :gm_message_id => message.attr['X-GM-MSGID'])
           envelope = message.attr['ENVELOPE']
-          raise "Multiple senders for #{message_id}" unless envelope.from.length == 1
+          uid = message.attr['UID']
+          raise "Multiple senders for #{uid}" unless envelope.from.length == 1
           recipients = envelope.to || []
           date = Date.parse(envelope.date) rescue nil
-          puts "#{message_id} #{date} #{envelope.from.first.name} #{envelope.subject} #{recipients.map { |a| "#{a.mailbox}@{a.host}" }}"
+          sender = envelope.from.first
+          logger.info "#{uid} #{date} From: #{sender.mailbox}@#{sender.host} #{envelope.subject.inspect} To: #{recipients.map { |a| "#{a.mailbox}@#{a.host}" }.join('+')}"
           begin
             Message.transaction do
               record = Message.create(
                 :account_id => account.id,
-                :uid => message_id,
+                :uid => uid,
                 :subject => envelope.subject,
                 :date => envelope.date,
-                # :sender => sender,
                 :gm_message_id => message.attr['X-GM-MSGID'],
                 :gm_thread_id  => message.attr['X-GM-THRID']
                 )
@@ -84,7 +104,7 @@ class MessageImporter
   end
 
   def add_field!(imap_attribute, record_attribute)
-    with_imap do |imap|
+    with_mailbox do |imap|
       Message.where(record_attribute => nil).find_in_batches(:batch_size => 1000) do |records|
         messages = imap.fetch(records.map(&:uid), imap_attribute) || []
         messages.each do |message|
@@ -101,13 +121,18 @@ end
 def main
   options = { :email_address => 'oliver.steele@gmail.com' }
   import_options = {}
+  action = :import
 
   OptionParser.new do|opts|
     opts.on('--since DATE') do |date| import_options[:after] = date end
     opts.on('--after DATE') do |date| import_options[:after] = date end
     opts.on('--before DATE') do |date| import_options[:before] = date end
     opts.on('-n', '--limit N') do |limit| import_options[:limit] = limit.to_i end
-    opts.on('--mailbox MAILBOX') do |mailbox| options[:mailbox] = mailbox end
+    opts.on('-m', '--mailbox NAME') do |name|
+      name = $1.to_sym if name =~ /^:(.+)$/
+      options[:mailbox_name] = name
+    end
+    opts.on('--mailboxes') do action = :mailboxes end
     opts.on('-u', '--user USER') do |user| options[:email_address] = user end
 
     opts.on('-h', '--help', 'Display this screen' ) do
@@ -118,7 +143,11 @@ def main
 
   Schema.new.change unless File.exists?('db/data.sqlite3')
   importer = MessageImporter.new(options)
-  importer.import_message_headers! import_options
+  case action
+  when :import then importer.import_message_headers! import_options
+  when :mailboxes then pp importer.mailboxes
+  else raise "Program error: unknown action #{action}"
+  end
   # importer.add_field! 'X-GM-MSGID', :gm_message_id
 end
 

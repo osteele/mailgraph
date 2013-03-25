@@ -5,7 +5,6 @@ require 'rake/sprocketstask'
 require 'resque/tasks'
 #require 'resque_scheduler/tasks'
 require './app'
-require './import'
 require './message_import_worker'
 require './config/environments'
 

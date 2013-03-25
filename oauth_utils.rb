@@ -1,7 +1,11 @@
 require 'google/api_client'
+require 'logger'
 require './models'
+require './utils'
 
 class GoogleOAuthToken
+  include Logging
+
   def self.find_by_email_address(email_address)
     return self.new(email_address)
   end
@@ -26,6 +30,7 @@ class GoogleOAuthToken
   end
 
   def renew!
+    self.logger.info "Renewing token for #{email_address}"
     client = Google::APIClient.new
     auth = client.authorization
     auth.client_id = google_oauth_client_id
