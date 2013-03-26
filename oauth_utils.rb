@@ -31,7 +31,7 @@ class GoogleOAuthToken
 
   def renew!
     self.logger.info "Renewing token for #{email_address}"
-    client = Google::APIClient.new
+    client = Google::APIClient.new(:application_name => "Mailgraph", :application_version => "0.1")
     auth = client.authorization
     auth.client_id = google_oauth_client_id
     auth.client_secret = google_oauth_client_secret

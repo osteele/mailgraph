@@ -84,7 +84,7 @@ class MessageImporter
         slice_seqnos -= recorded_gm_msg_ids.map { |gm_msg_id| gm_msg_id_to_seqno[gm_msg_id] }
 
         next unless slice_seqnos.any?
-        logger.info "Fetching messages #{slice_seqnos.first}-#{slice_seqnos.last}"
+        logger.info "Fetching #{slice_seqnos.length} messages #{slice_seqnos.first}-#{slice_seqnos.last}:"
         for message in imap.fetch(slice_seqnos, ['ENVELOPE', 'UID', 'X-GM-MSGID', 'X-GM-THRID'])
           break if limit and count >= limit
           count += 1
