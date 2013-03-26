@@ -1,13 +1,15 @@
 # Next
-* Index by message id
-* Add Sent messages
 * Consolidate addresses
 * Tag cloud
 * Update messages; sweep the cache
 * Select year
 * Switch between senders and recipients
+* Incremental update
+  fix the code to remove uid's that are in the database
+  test whether UIDNEXT has incremented?
 
 ## Public
+* More mailboxes
 * Update mail on login
 * Update mail messages in background
 * Landing page doesn't force login
@@ -31,16 +33,6 @@
 * Adaptive time periods
 
 # Notes
-
-## Index by Message ID
-* What to do with bogus or duplicate message_id? -- is there a In-Reply-To or References?
-* Store, index on envelope.message_id
-* Add store, message.uidvalidity; index on account, uid, uidvalidity
-* Store actual uid message.attr['UID'] instead of sequence number
-* Only filter ids where mailbox, uidvalidity match
-* When found a mailbox, update uid and uidvalidity
-* Add table (account, mailbox, UIDVALIDITY, message_count)
-* Move message_count from user, sum from user's mailboxes
 
 ## Consolidate Addresses
 ### Contacts

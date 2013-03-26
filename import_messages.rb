@@ -1,5 +1,6 @@
-require 'mail'
 require 'pp'
+require 'pry'
+require 'mail'
 require 'active_support'
 require './app'
 require './models'
@@ -41,6 +42,7 @@ class MessageImporter
           else raise "Program error: can't search for mailbox #{mailbox_name.inspect} #{mailbox_name.class}"
         end
       raise "No mailbox #{mailbox_name}; valid mailboxes are #{mailboxes.map(&:name).join(", ")}" unless mailbox
+      @mailbox = mailbox
       imap.select(mailbox.name)
       yield imap
     end
@@ -63,25 +65,42 @@ class MessageImporter
     limit = options[:limit]
     account = Account.where(:email_address => email_address).first_or_create!
     with_message_ids(options) do |imap, message_ids|
-      logger.info "Retrieving #{message_ids.length} messages"
+      uidvalidity = imap.responses['UIDVALIDITY'][0]
+      mailbox_record = Mailbox.where(:account_id => account.id, :name => @mailbox.name).first
+      mailbox_record ||= Mailbox.create(:account_id => account.id, :name => @mailbox.name, :uidvalidity => uidvalidity)
+      unless mailbox_record.uidvalidity == uidvalidity
+        logger.info "Updating mailbox #{@mailbox.name} UIDVALIDITY #{mailbox_record.uidvalidity} -> #{uidvalidity}"
+        Message.update_all({:uid => nil}, {:account_id => account.id, :mailbox_id => mailbox_record.id})
+        mailbox_record.update_attributes :uidvalidity => uidvalidity
+      end
+      message_ids -= Message.where(:account_id => account.id, :mailbox_id => mailbox_record.id, :uid => message_ids).pluck(:uid)
+      logger.info "Processing #{message_ids.length} messages"
       message_ids.each_slice(1000) do |slice_ids|
         break if limit and count >= limit
-        logger.info "Fetching messages #{slice_ids.first}..#{slice_ids.last}" if slice_ids.any?
+        slice_ids -= Message.where(:account_id => account.id, :mailbox_id => mailbox_record.id, :uid => slice_ids).pluck(:uid)
+        logger.info "Fetching messages #{slice_ids.first}-#{slice_ids.last}" if slice_ids.any?
         for message in (imap.fetch(slice_ids, ['ENVELOPE', 'UID', 'X-GM-MSGID', 'X-GM-THRID']) || [])
           break if limit and count >= limit
           count += 1
-          next if Message.exists?(:account_id => account.id, :gm_message_id => message.attr['X-GM-MSGID'])
           envelope = message.attr['ENVELOPE']
           uid = message.attr['UID']
+          if record = Message.where(:account_id => account.id, :gm_message_id => message.attr['X-GM-MSGID']).first
+            next if record.uid == uid
+            puts "Updating message uid #{record.uid} -> #{uid}".gsub('  ', ' ')
+            record.update_attributes :mailbox_id => mailbox_record.id, :uid => uid
+            next
+          end
+          raise "No senders for #{uid}" unless envelope.from.any?
           raise "Multiple senders for #{uid}" unless envelope.from.length == 1
           recipients = envelope.to || []
           date = Date.parse(envelope.date) rescue nil
           sender = envelope.from.first
-          logger.info "#{uid} #{date} From: #{sender.mailbox}@#{sender.host} #{envelope.subject.inspect} To: #{recipients.map { |a| "#{a.mailbox}@#{a.host}" }.join('+')}"
+          logger.info "#{uid} #{date} From: #{sender.mailbox}@#{sender.host} To: #{recipients.map { |a| "#{a.mailbox}@#{a.host}" }.join('+')} #{envelope.subject.inspect}"
           begin
             Message.transaction do
               record = Message.create(
                 :account_id => account.id,
+                :mailbox_id => mailbox_record.id,
                 :uid => uid,
                 :subject => envelope.subject,
                 :date => envelope.date,
@@ -95,7 +114,7 @@ class MessageImporter
               end
             end
           rescue SQLite3::ConstraintException => e
-            raise unless e.to_s =~ /column uid is not unique/
+            raise unless e.to_s =~ /column gm_message_id is not unique/
           end
         end
       end

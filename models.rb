@@ -22,19 +22,23 @@ class Address < ActiveRecord::Base
   end
 end
 
+class Mailbox < ActiveRecord::Base
+  belongs_to :account
+  has_many :messages
+end
+
 class MessageAssociation < ActiveRecord::Base
   belongs_to :message
   belongs_to :address
 end
 
 class Message < ActiveRecord::Base
+  belongs_to :mailbox
   has_many :message_associations
-  # has_many :senders, :class_name => Address, :through => :message_associates, :source => :address, :finder_sql
-  # has_many :to, :class_name => Address, :through => :message_associates, :source => :address
-  # has_many :cc, :class_name => Address, :through => :message_associates, :source => :address
 end
 
 class Account < ActiveRecord::Base
+  has_many :mailboxes
   has_many :messages
 
   def frequent_correspondents(limit=nil)
