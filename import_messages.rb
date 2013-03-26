@@ -64,7 +64,7 @@ class MessageImporter
     count = 0
     limit = options[:limit]
     account = Account.where(:email_address => email_address).first_or_create!
-    with_message_ids(options) do |imap, message_ids|
+    with_message_ids(options) do |imap, message_seqnos|
       uidvalidity = imap.responses['UIDVALIDITY'][0]
       mailbox_record = Mailbox.where(:account_id => account.id, :name => @mailbox.name).first
       mailbox_record ||= Mailbox.create(:account_id => account.id, :name => @mailbox.name, :uidvalidity => uidvalidity)
@@ -73,13 +73,19 @@ class MessageImporter
         Message.update_all({:uid => nil}, {:account_id => account.id, :mailbox_id => mailbox_record.id})
         mailbox_record.update_attributes :uidvalidity => uidvalidity
       end
-      message_ids -= Message.where(:account_id => account.id, :mailbox_id => mailbox_record.id, :uid => message_ids).pluck(:uid)
-      logger.info "Processing #{message_ids.length} messages"
-      message_ids.each_slice(1000) do |slice_ids|
+      logger.info "Processing #{message_seqnos.length} messages"
+      message_seqnos.each_slice(1000) do |slice_seqnos|
         break if limit and count >= limit
-        slice_ids -= Message.where(:account_id => account.id, :mailbox_id => mailbox_record.id, :uid => slice_ids).pluck(:uid)
-        logger.info "Fetching messages #{slice_ids.first}-#{slice_ids.last}" if slice_ids.any?
-        for message in (imap.fetch(slice_ids, ['ENVELOPE', 'UID', 'X-GM-MSGID', 'X-GM-THRID']) || [])
+
+        gm_msg_ids = imap.fetch(slice_seqnos, ['X-GM-MSGID']).map { |m| m.attr['X-GM-MSGID'] }
+        raise "Skipping fetch pruning because #{slice_seqnos.length} != #{gm_msg_ids.length}" unless slice_seqnos.length == gm_msg_ids.length
+        gm_msg_id_to_seqno = Hash[*gm_msg_ids.zip(slice_seqnos).flatten]
+        recorded_gm_msg_ids = Message.where(:account_id => account.id, :mailbox_id => mailbox_record.id, :gm_message_id => gm_msg_ids).pluck(:gm_message_id).map(&:to_i)
+        slice_seqnos -= recorded_gm_msg_ids.map { |gm_msg_id| gm_msg_id_to_seqno[gm_msg_id] }
+
+        next unless slice_seqnos.any?
+        logger.info "Fetching messages #{slice_seqnos.first}-#{slice_seqnos.last}"
+        for message in imap.fetch(slice_seqnos, ['ENVELOPE', 'UID', 'X-GM-MSGID', 'X-GM-THRID'])
           break if limit and count >= limit
           count += 1
           envelope = message.attr['ENVELOPE']

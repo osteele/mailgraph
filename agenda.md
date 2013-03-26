@@ -5,7 +5,6 @@
 * Select year
 * Switch between senders and recipients
 * Incremental update
-  fix the code to remove uid's that are in the database
   test whether UIDNEXT has incremented?
 
 ## Public
