@@ -1,11 +1,13 @@
 class Address < ActiveRecord::Base
+  has_and_belongs_to_many :contacts
+
   def self.from_imap_address(address)
     self.where(:display_name => address.name, :spec => "#{address.mailbox}@#{address.host}", :domain_name => address.host).first_or_create
   end
 
   def self.from_string(address)
     name, domain_name = address.split(/@/, 2)
-    self.where(:display_name => address, :spec => address, :domain_name => domain_name)
+    self.where(:display_name => address, :spec => address, :domain_name => domain_name).first_or_create
   end
 
   def self.combine_addresses!
@@ -20,6 +22,12 @@ class Address < ActiveRecord::Base
     return Address.find(canonical_address_id) if canonical_address_id and canonical_address_id != id
     return self
   end
+end
+
+class Contact < ActiveRecord::Base
+  has_and_belongs_to_many :addresses
+#   has_many :addresses
+#   has_many :addresses, :through => :appointments
 end
 
 class Mailbox < ActiveRecord::Base

@@ -8,7 +8,8 @@
   test whether UIDNEXT has incremented?
 
 ## Public
-* More mailboxes
+* Scan more mailboxes, if All is not present
+* Either email addresses are per account, or canonical address is a separate table (or always use Person)
 * Update mail on login
 * Update mail messages in background
 * Landing page doesn't force login
@@ -35,9 +36,8 @@
 
 ## Consolidate Addresses
 ### Contacts
-* Build a join table: email address <-> contact
-* For each email address that is joined to only one contact, join it to the person for that contact
-* View senders again
+* test for attr["primary"]=="true"; store primary contact address
+* Canonicalization: for each email address that has only one contact, use that contact's primary address
 
 ### Heuristics
 * Scan the senders in the Sent folder
