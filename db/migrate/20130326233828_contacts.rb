@@ -2,6 +2,7 @@ class Contacts < ActiveRecord::Migration
   def up
     create_table :contacts do |t|
       t.references :account, :null => false
+      t.integer :primary_address_id, :references => [:address, :id]
       t.string :uid, :null => false
       t.string :name
     end

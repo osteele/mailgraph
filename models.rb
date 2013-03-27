@@ -26,8 +26,7 @@ end
 
 class Contact < ActiveRecord::Base
   has_and_belongs_to_many :addresses
-#   has_many :addresses
-#   has_many :addresses, :through => :appointments
+  belongs_to :primary_address, :class_name => Address
 end
 
 class Mailbox < ActiveRecord::Base

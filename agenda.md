@@ -36,7 +36,6 @@
 
 ## Consolidate Addresses
 ### Contacts
-* test for attr["primary"]=="true"; store primary contact address
 * Canonicalization: for each email address that has only one contact, use that contact's primary address
 
 ### Heuristics

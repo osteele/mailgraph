@@ -25,6 +25,7 @@
 # Presentation
 * Tag cloud
   * Add size
+  * Show photos //link[rel="http://schemas.google.com/contacts/2008/rel#photo"][type="image/*"].attr('etag')
   * Sort by frequency, name, last contact
   * Filter by sender, recipient, timespan
 * Stream graph

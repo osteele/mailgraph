@@ -1,4 +1,5 @@
-require "bundler/setup"
+require 'bundler/setup'
+require 'pry'
 require 'nokogiri'
 require 'httparty'
 require 'ostruct'
@@ -27,14 +28,14 @@ def read_contacts(access_token, limit=300, offset=0)
   doc.xpath('//entry').map do |item|
     etag = item.attributes['etag'].inner_text.gsub('"', '')
     name = item.xpath('./title')[0].children.inner_text
-    addresses = item.xpath('./email').map { |email|
-      email.attributes['address'].inner_text
-    }
+    addresses = item.xpath('./email').map { |email| email.attributes['address'].inner_text }
+    # pry binding
 
     contact = OpenStruct.new({
       :uid => etag,
       :name => name,
-      :addresses => addresses
+      :addresses => addresses,
+      :primary_address => item.xpath('./email[@primary]').map { |email| email.attributes['address'].inner_text }.first
     })
   end
 end
@@ -50,12 +51,13 @@ def for_all_contacts(access_token, &block)
 end
 
 account = Account.where(:email_address => email_address).first_or_create!
-for_all_contacts(access_token) do |entry|
-  record = Contact.where(:account_id => account, :uid => entry.uid).first_or_initialize
-  puts "Creating contact #{entry.uid} #{entry.name}" unless record.id
+for_all_contacts(access_token) do |contact|
+  record = Contact.where(:account_id => account, :uid => contact.uid).first_or_initialize
+  puts "Creating contact #{contact.uid} #{contact.name}" unless record.id
   record.transaction do
-    record.update_attributes :name => entry.name unless record.name == entry.name
-    record.save!
-    record.addresses = entry.addresses.map { |email| Address.from_string(email) }
+    record.name = contact.name
+    record.primary_address = contact.primary_address ? Address.from_string(contact.primary_address) : nil
+    record.save! if record.changed? or record.id.nil?
+    record.addresses = record.addresses.map { |email| Address.from_string(email) }
   end
 end
