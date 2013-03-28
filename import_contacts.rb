@@ -29,7 +29,6 @@ def read_contacts(access_token, limit=300, offset=0)
     etag = item.attributes['etag'].inner_text.gsub('"', '')
     name = item.xpath('./title')[0].children.inner_text
     addresses = item.xpath('./email').map { |email| email.attributes['address'].inner_text }
-    # pry binding
 
     contact = OpenStruct.new({
       :uid => etag,
@@ -58,6 +57,10 @@ for_all_contacts(access_token) do |contact|
     record.name = contact.name
     record.primary_address = contact.primary_address ? Address.from_string(contact.primary_address) : nil
     record.save! if record.changed? or record.id.nil?
-    record.addresses = record.addresses.map { |email| Address.from_string(email) }
+    addresses = contact.addresses.map { |email| Address.from_string(email) }
+    unless record.addresses.pluck(:id) == addresses.map(&:id)
+      puts "Creating contact #{contact.uid} #{contact.name}" unless record.id
+      record.addresses = addresses
+    end
   end
 end

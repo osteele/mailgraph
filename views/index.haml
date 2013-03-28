@@ -32,9 +32,9 @@
         %p Frequent correspondents
         %a.clearfix(href="/user/#{user.id}/flow") Contact Stream
         %div.addresses
-          - for address in user.frequent_correspondents(40).sort_by { |a| (a.display_name || a.spec).downcase }
-            %span.address[address]
-              = "#{address.display_name} &lt;#{address.spec}&gt;"
+          - for contact in EmailAnalyzer.new(user).frequent_correspondents(40) #.sort_by { |a| (a.display_name || a.spec).downcase }
+            %span.address[contact]
+              = "#{contact.name} &lt;#{contact.spec}&gt; (#{contact.message_count})"
               %span.hidden.me me!
               %span.hidden.same-as same as&hellip;
 

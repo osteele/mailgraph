@@ -35,3 +35,8 @@ namespace :bower do
     sh "bower install"
   end
 end
+
+desc "Create or update SQL views"
+task "db:update_views" do
+  require './config/db_views'
+end

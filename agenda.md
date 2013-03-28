@@ -1,14 +1,19 @@
 # Next
-* Consolidate addresses
-* Tag cloud
+* Display tag of people
+  - duplicate email addresses
+  - faster query
+* Streamgraph from contacts
 * Update messages; sweep the cache
 * Select year
 * Switch between senders and recipients
 * Incremental update
   test whether UIDNEXT has incremented?
+* Mobile view
 
 ## Public
-* Scan more mailboxes, if All is not present
+* Scan contacts
+* Prompt to enable All
+* Scan more mailboxes if All is not present
 * Either email addresses are per account, or canonical address is a separate table (or always use Person)
 * Update mail on login
 * Update mail messages in background
@@ -22,6 +27,7 @@
 ## Data Quality
 * Default to the most common name as the person's name
 * Remove deleted messages
+* Remove deleted contacts
 * Scan multiple folders (and filter by gid)
 
 ## Architecture
@@ -35,6 +41,7 @@
 # Notes
 
 ## Consolidate Addresses
+Map from (account_id, address) -> contact
 ### Contacts
 * Canonicalization: for each email address that has only one contact, use that contact's primary address
 
@@ -45,8 +52,10 @@
 ### Manual
 * Drag and drop within the tag cloud
 
-## Update Messages
-* Scan all the gmail addresses, delete if not in All
+## Delete Messages
+* A: During full update, record uid's in db that aren't in fetch. Cons: requires full update.
+* B: Iterate through the database in blocks, doing fetch for each block.
+* C: Track which timespans we've asked for recently; add messages.refreshed_at; delete messages in that timespan.
 
 ## API Server
 * Grape https://github.com/intridea/grape

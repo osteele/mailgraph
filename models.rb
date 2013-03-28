@@ -27,6 +27,18 @@ end
 class Contact < ActiveRecord::Base
   has_and_belongs_to_many :addresses
   belongs_to :primary_address, :class_name => Address
+
+  def self.for_address_spec(address_spec, account)
+    contacts = self.find_by_sql([<<-"SQL", account.id, address_spec])
+      SELECT * FROM contacts
+      JOIN computed_addresses_contacts ON computed_addresses_contacts.contact_id=contacts.id
+      WHERE computed_addresses_contacts.account_id=? AND computed_addresses_contacts.spec=?
+      GROUP BY contacts.id
+    SQL
+    throw "No contact for #{address_spec} in account #{account.email_address}" unless contacts.any?
+    throw "Too many contacts for #{address_spec}" if contacts.length > 1
+    return contacts.first
+  end
 end
 
 class Mailbox < ActiveRecord::Base
@@ -47,24 +59,6 @@ end
 class Account < ActiveRecord::Base
   has_many :mailboxes
   has_many :messages
-
-  def frequent_correspondents(limit=nil)
-    limit ||= 15
-    account_address = Address.find_or_create_by_spec(self.email_address).canonicalize
-    addresses = Address.find_by_sql([<<-"SQL", self.id, account_address.id, limit])
-      SELECT (CASE WHEN canonical_address_id IS NOT NULL THEN canonical_address_id ELSE addresses.id END) AS id, COUNT(*) AS count
-      FROM addresses
-      JOIN message_associations ON address_id=addresses.id
-      JOIN messages ON message_id=messages.id
-      WHERE messages.account_id = ?
-      AND domain_name IS NOT NULL
-      AND (canonical_address_id IS NULL OR canonical_address_id != ?)
-      GROUP BY addresses.id
-      ORDER BY COUNT(*) DESC
-      LIMIT ?
-    SQL
-    Address.find(addresses.map(&:id))
-  end
 end
 
 class Token < ActiveRecord::Base; end
