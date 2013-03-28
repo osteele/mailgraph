@@ -8,32 +8,16 @@ class EmailAnalyzer
   def frequent_correspondents(limit=nil)
     limit ||= 15
     account_contact = Contact.for_address_spec(account.email_address, account)
-    # raise [account.id, account_contact.id, account_contact].inspect
-    contacts = Address.find_by_sql([<<-"SQL", account.id, account_contact.id, limit])
+    contacts = Address.find_by_sql([<<-"SQL", account.id, account_contact.id, account_contact.id, limit])
       SELECT *, COUNT(*) AS message_count FROM contacts
       JOIN computed_addresses_contacts ON computed_addresses_contacts.contact_id=contacts.id
       JOIN message_associations ON message_associations.address_id=computed_addresses_contacts.address_id
       JOIN messages ON message_associations.message_id=messages.id
-      WHERE messages.account_id = ? AND contacts.id != ?
+      WHERE messages.account_id = ? AND contacts.account_id = ? AND contacts.id != ?
       GROUP BY contacts.id
       ORDER BY COUNT(*) DESC LIMIT ?
     SQL
-    # raise contacts.map(&:message_count).inspect
     return contacts
-
-    addresses = Address.find_by_sql([<<-"SQL", self.id, account_address.id, limit])
-      SELECT (CASE WHEN canonical_address_id IS NOT NULL THEN canonical_address_id ELSE addresses.id END) AS id, COUNT(*) AS count
-      FROM addresses
-      JOIN message_associations ON address_id=addresses.id
-      JOIN messages ON message_id=messages.id
-      WHERE messages.account_id = ?
-      AND domain_name IS NOT NULL
-      AND (canonical_address_id IS NULL OR canonical_address_id != ?)
-      GROUP BY addresses.id
-      ORDER BY COUNT(*) DESC
-      LIMIT ?
-    SQL
-    Address.find(addresses.map(&:id))
   end
 
   def series(start_date, end_date, limit)

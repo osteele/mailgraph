@@ -1,7 +1,6 @@
 # Next
 * Display tag of people
   - duplicate email addresses
-  - faster query
 * Streamgraph from contacts
 * Update messages; sweep the cache
 * Select year
@@ -10,7 +9,12 @@
   test whether UIDNEXT has incremented?
 * Mobile view
 
+## Bugs
+* why does frequent correspondents query scan contacts twice?
+* Update mail is no longer skipping seen uid's
+
 ## Public
+* ANALYZE
 * Scan contacts
 * Prompt to enable All
 * Scan more mailboxes if All is not present
@@ -39,18 +43,6 @@
 * Adaptive time periods
 
 # Notes
-
-## Consolidate Addresses
-Map from (account_id, address) -> contact
-### Contacts
-* Canonicalization: for each email address that has only one contact, use that contact's primary address
-
-### Heuristics
-* Scan the senders in the Sent folder
-* Offer these as obsolete synonyms for the account holder
-
-### Manual
-* Drag and drop within the tag cloud
 
 ## Delete Messages
 * A: During full update, record uid's in db that aren't in fetch. Cons: requires full update.

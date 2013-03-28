@@ -39,6 +39,22 @@ class Contact < ActiveRecord::Base
     throw "Too many contacts for #{address_spec}" if contacts.length > 1
     return contacts.first
   end
+
+  def self.group_by_duplicate_addresses
+    records = self.connection.select_all(<<-"SQL")
+      SELECT addresses.spec AS address_spec, COUNT(DISTINCT contacts.id) AS contacts_count, GROUP_CONCAT(contacts.id) AS contact_ids
+      FROM addresses_contacts
+      JOIN addresses ON addresses.id=addresses_contacts.address_id
+      JOIN contacts ON contacts.id=addresses_contacts.contact_id
+      GROUP BY addresses.spec
+      HAVING contacts_count > 1
+      ORDER BY contacts_count DESC LIMIT 2
+    SQL
+    records
+      .map { |fields| OpenStruct.new(fields) }
+      .each do |record| record.contact_ids = record.contact_ids.split(',') end
+      .each do |record| class << record; def contacts; Contact.find(contact_ids); end end end
+  end
 end
 
 class Mailbox < ActiveRecord::Base
