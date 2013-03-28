@@ -50,9 +50,11 @@ def for_all_contacts(access_token, &block)
 end
 
 account = Account.where(:email_address => email_address).first_or_create!
+contact_uids = []
 for_all_contacts(access_token) do |contact|
+  contact_uids << contact.uid
   record = Contact.where(:account_id => account, :uid => contact.uid).first_or_initialize
-  puts "Creating contact #{contact.uid} #{contact.name}" unless record.id
+  puts "Creating contact #{contact.name}" unless record.id
   record.transaction do
     record.name = contact.name
     record.primary_address = contact.primary_address ? Address.from_string(contact.primary_address) : nil
@@ -63,4 +65,10 @@ for_all_contacts(access_token) do |contact|
       record.addresses = addresses
     end
   end
+end
+
+deleted_contact_uids = Contact.where(:account_id => account.id).pluck(:uid) - contact_uids
+if deleted_contact_uids.any?
+  puts "Deleting #{deleted_contact_uids.length} contacts"
+  Contact.where(:account_id => account.id, :uid => deleted_contact_uids).destroy_all
 end

@@ -1,6 +1,5 @@
 # Next
 * Display tag of people
-  - duplicate email addresses
 * Streamgraph from contacts
 * Update messages; sweep the cache
 * Select year
@@ -16,6 +15,7 @@
 ## Public
 * ANALYZE
 * Scan contacts
+* Handle duplicate addresses
 * Prompt to enable All
 * Scan more mailboxes if All is not present
 * Either email addresses are per account, or canonical address is a separate table (or always use Person)
@@ -31,7 +31,6 @@
 ## Data Quality
 * Default to the most common name as the person's name
 * Remove deleted messages
-* Remove deleted contacts
 * Scan multiple folders (and filter by gid)
 
 ## Architecture
