@@ -20,7 +20,8 @@
 * Index by RFC822.SIZE
 * Sentiment analysis
 * Vocabulary analysis
-* MTTR to identify important correspondents
+* MTTR by sender / recipient
+* Topics by correspondent
 
 # Presentation
 * Tag cloud
@@ -28,9 +29,12 @@
   * Show photos //link[rel="http://schemas.google.com/contacts/2008/rel#photo"][type="image/*"].attr('etag')
   * Sort by frequency, name, last contact
   * Filter by sender, recipient, timespan
+* Chord diagram of sender -> recipient
+* Sankey of senders -> recipients
 * Stream graph
   * Filter by sender, recipient, timespan
 * More analogs http://betabeers.com/uploads/estudios/crunchbase-startup-data/?
   * Bar char: Incoming vs. Outgoing by year
   * Pie char: Top Senders 2012 [choose year]; Top Recipients 2012
   * Tables: Top correspondents by year [range of years]
+* Frequent term wordle https://github.com/jasondavies/d3-cloud

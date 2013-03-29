@@ -1,5 +1,6 @@
 require "bundler/setup"
 Bundler.require(:default)
+require 'digest/sha1'
 require 'sinatra'
 require 'haml'
 require 'coffee-script'
@@ -54,21 +55,31 @@ get '/user/:id/flow' do
   haml :flow, :locals => {:user => @user}
 end
 
+get '/user/:id/bubble' do
+  haml :bubble, :locals => {:user => @user}
+end
+
+def cached(redis, request, params, &block)
+  redis_key = "url:#{request.path}"
+  redis[redis_key] = nil if params[:cache] == "false"
+  value = redis[redis_key]
+  value = nil if value == ""
+  unless value
+    value = yield
+    redis[redis_key] = value
+  end
+  value
+end
+
 get '/user/:id/contacts.json' do
-  path = request.path
-  return "No account for #{user}" unless @user
   start_date = parse_date(params[:since] || params[:after]) if params[:since] or params[:after]
   end_date = parse_date(params[:before] || params[:until]) if params[:before] or params[:until]
   limit = (params[:limit] || 20).to_i
-  redis[path] = nil if params.include?("nocache")
-  json = redis[path]
-  # return json.inspect
-  unless json and json != ""
-    series = EmailAnalyzer.new(@user).series(start_date, end_date, limit)
-    json = series.to_json
-    redis[path] = json
-    # redis.expire(id, 3600*24*5)
+  json = cached(redis, request, params) do
+    series = EmailAnalyzer.new(@user).series(:start => start_date, :end => end_date, :limit => limit, :by_interval => params[:by_interval])
+    series.to_json
   end
+  etag Digest::SHA1.hexdigest(json)
   content_type :json
   json
 end

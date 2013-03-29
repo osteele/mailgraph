@@ -8,7 +8,7 @@ class EmailAnalyzer
   def frequent_correspondents(limit=nil)
     limit ||= 15
     account_contact = Contact.for_address_spec(account.email_address, account)
-    contacts = Address.find_by_sql([<<-"SQL", account.id, account_contact.id, account_contact.id, limit])
+    contacts = Address.find_by_sql([<<-SQL, account.id, account_contact.id, account_contact.id, limit])
       SELECT *, COUNT(*) AS message_count FROM contacts
       JOIN computed_addresses_contacts ON computed_addresses_contacts.contact_id=contacts.id
       JOIN message_associations ON message_associations.address_id=computed_addresses_contacts.address_id
@@ -20,15 +20,41 @@ class EmailAnalyzer
     return contacts
   end
 
-  def series(start_date, end_date, limit)
-    start_date ||= account.messages.where('date IS NOT NULL AND date > "1975-01-01"').first(:order => :date).date.beginning_of_year
-    end_date ||= account.messages.last(:order => 'date').date
+  def series(options)
+    start_date = options[:start_date] || account.messages.where('date IS NOT NULL AND date > "1975-01-01"').first(:order => :date).date.beginning_of_year
+    end_date = options[:end_date] || account.messages.last(:order => 'date').date
+    limit = options[:limit]
+
+    unless options[:by_interval]
+      account_contact = Contact.for_address_spec(account.email_address, account)
+      records = Contact.connection.select_all(<<-SQL, nil, [[nil, account.id], [nil, account_contact.id], [nil, limit]])
+        SELECT *, COUNT(*) AS message_count FROM contacts_messages_view
+        WHERE account_id = $1 AND id != $2
+        GROUP BY id, field
+        ORDER BY message_count DESC
+        LIMIT $3
+      SQL
+      summaries = []
+      current_summary = nil
+      records.each do |record|
+        unless current_summary and current_summary[:id] == record['id']
+          summaries << current_summary = {:id => record['id'], :name => record['name'], :fields => {}, :value => 0}
+        end
+        current_summary[:fields][record['field']] = record['message_count']
+        current_summary[:value] += record['message_count']
+
+        current_summary[:className] = current_summary[:name]
+        current_summary[:packageName] = current_summary[:name]
+      end
+      return summaries
+    end
+
     stats = {}
     map = {}
     account_address = Address.find_by_spec(account.email_address).canonicalize
     while start_date < end_date
       next_date = start_date + 1.month
-      results = Message.connection.select_all(<<-"SQL", nil, [[nil, user.id], [nil, start_date], [nil, next_date], [nil, account_address.id]])
+      results = Message.connection.select_all(<<-SQL, nil, [[nil, account.id], [nil, start_date], [nil, next_date], [nil, account_address.id]])
         SELECT spec, addresses.id, addresses.canonical_address_id, COUNT(*) AS count FROM addresses
         JOIN message_associations ON address_id=addresses.id
         JOIN messages ON message_id=messages.id

@@ -1,19 +1,20 @@
 # Next
-* Display tag of people
-* Streamgraph from contacts
-* Update messages; sweep the cache
-* Select year
-* Switch between senders and recipients
+* Duplicate contacts
+* Change streamgraph to contacts
+* iPhone view
+* Sweep the cache when messages / contacts change
+* Tag cloud / stream graph: select year
+* Tag cloud / stream graph: wwitch between senders / recipients / both
 * Incremental update
   test whether UIDNEXT has incremented?
 * Mobile view
 
 ## Bugs
-* why does frequent correspondents query scan contacts twice?
-* Update mail is no longer skipping seen uid's
+* Why does frequent correspondents query scan contacts twice?
+* Import mail no longer skips current uid's
 
 ## Public
-* ANALYZE
+* ANALYZE after import
 * Scan contacts
 * Handle duplicate addresses
 * Prompt to enable All
@@ -27,6 +28,11 @@
 * Warn if folders list doesn't include All
 * ToS, Privacy, Contact
 * Wait List
+* PJax
+* etag Digest::SHA1.hexdigest
+
+## Debugging
+* https://github.com/codegram/rack-webconsole
 
 ## Data Quality
 * Default to the most common name as the person's name
@@ -34,6 +40,7 @@
 * Scan multiple folders (and filter by gid)
 
 ## Architecture
+* Cache w/ https://github.com/rtomayko/rack-cache and https://github.com/jodosha/redis-store/tree/master/redis-rack-cache
 * Rewrite client in angular / derby
   http://briantford.com/blog/angular-phonegap.html
 * Sass

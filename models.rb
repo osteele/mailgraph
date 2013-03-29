@@ -36,7 +36,7 @@ class Contact < ActiveRecord::Base
       GROUP BY contacts.id
     SQL
     throw "No contact for #{address_spec} in account #{account.email_address}" unless contacts.any?
-    throw "Too many contacts for #{address_spec}" if contacts.length > 1
+    # throw "Too many contacts for #{address_spec}" if contacts.length > 1
     return contacts.first
   end
 

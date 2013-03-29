@@ -24,3 +24,10 @@ view :computed_addresses_contacts, <<-SQL
   JOIN contacts ON addresses_contacts.contact_id=contacts.id
   JOIN accounts ON contacts.account_id=accounts.id
 SQL
+
+view :contacts_messages_view, <<-SQL
+  CREATE VIEW contacts_messages_view AS SELECT contacts.*, message_id, field
+  FROM contacts
+  JOIN computed_addresses_contacts ON computed_addresses_contacts.contact_id=contacts.id
+  JOIN message_associations ON computed_addresses_contacts.address_id=message_associations.address_id
+end
