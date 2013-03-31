@@ -10,8 +10,8 @@ class EmailAnalyzer
     account_contact = Contact.for_address_spec(account.email_address, account)
     contacts = Address.find_by_sql([<<-SQL, account.id, account_contact.id, account_contact.id, limit])
       SELECT *, COUNT(*) AS message_count FROM contacts
-      JOIN computed_addresses_contacts ON computed_addresses_contacts.contact_id=contacts.id
-      JOIN message_associations ON message_associations.address_id=computed_addresses_contacts.address_id
+      JOIN addresses_contacts_view ON addresses_contacts_view.contact_id=contacts.id
+      JOIN message_associations ON message_associations.address_id=addresses_contacts_view.address_id
       JOIN messages ON message_associations.message_id=messages.id
       WHERE messages.account_id = ? AND contacts.account_id = ? AND contacts.id != ?
       GROUP BY contacts.id

@@ -18,6 +18,10 @@ class Address < ActiveRecord::Base
     SQL
   end
 
+  def inspect
+    return "<#{self.class.name.split(':').last} #{display_name} #{id}>"
+  end
+
   def canonicalize
     return Address.find(canonical_address_id) if canonical_address_id and canonical_address_id != id
     return self
@@ -31,8 +35,8 @@ class Contact < ActiveRecord::Base
   def self.for_address_spec(address_spec, account)
     contacts = self.find_by_sql([<<-"SQL", account.id, address_spec])
       SELECT * FROM contacts
-      JOIN computed_addresses_contacts ON computed_addresses_contacts.contact_id=contacts.id
-      WHERE computed_addresses_contacts.account_id=? AND computed_addresses_contacts.spec=?
+      JOIN addresses_contacts_view ON addresses_contacts_view.contact_id=contacts.id
+      WHERE addresses_contacts_view.account_id=? AND addresses_contacts_view.address=LOWER(?)
       GROUP BY contacts.id
     SQL
     throw "No contact for #{address_spec} in account #{account.email_address}" unless contacts.any?

@@ -26,12 +26,12 @@ def read_contacts(access_token, limit=300, offset=0)
   doc = Nokogiri::XML(response.body)
   doc.remove_namespaces!
   doc.xpath('//entry').map do |item|
-    etag = item.attributes['etag'].inner_text.gsub('"', '')
+    id = item.xpath('./id').inner_text.split('/').last
     name = item.xpath('./title')[0].children.inner_text
     addresses = item.xpath('./email').map { |email| email.attributes['address'].inner_text }
 
     contact = OpenStruct.new({
-      :uid => etag,
+      :uid => id,
       :name => name,
       :addresses => addresses,
       :primary_address => item.xpath('./email[@primary]').map { |email| email.attributes['address'].inner_text }.first
@@ -54,14 +54,15 @@ contact_uids = []
 for_all_contacts(access_token) do |contact|
   contact_uids << contact.uid
   record = Contact.where(:account_id => account, :uid => contact.uid).first_or_initialize
-  puts "Creating contact #{contact.name}" unless record.id
+  created = record.id.nil?
+  puts "Creating contact #{contact.name}" if created
   record.transaction do
     record.name = contact.name
     record.primary_address = contact.primary_address ? Address.from_string(contact.primary_address) : nil
     record.save! if record.changed? or record.id.nil?
     addresses = contact.addresses.map { |email| Address.from_string(email) }
     unless record.addresses.pluck(:id) == addresses.map(&:id)
-      puts "Creating contact #{contact.uid} #{contact.name}" unless record.id
+      puts "Updating addresses for #{record.id} #{contact.uid} #{contact.name}" unless created
       record.addresses = addresses
     end
   end
