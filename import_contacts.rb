@@ -70,6 +70,6 @@ end
 
 deleted_contact_uids = Contact.where(:account_id => account.id).pluck(:uid) - contact_uids
 if deleted_contact_uids.any?
-  puts "Deleting #{deleted_contact_uids.length} contacts"
+  puts "Deleting #{deleted_contact_uids.length} contacts:\n#{Contact.where(:account_id => account.id, :uid => deleted_contact_uids).pluck(:name).join("\n")}"
   Contact.where(:account_id => account.id, :uid => deleted_contact_uids).destroy_all
 end

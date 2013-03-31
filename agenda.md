@@ -1,5 +1,6 @@
 # Next
 * Duplicate contacts
+  Link -> https://www.google.com/contacts/u/0/#contacts/search/${encode name}
 * Change streamgraph to contacts
 * iPhone view
 * Sweep the cache when messages / contacts change

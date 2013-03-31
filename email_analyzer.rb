@@ -38,13 +38,15 @@ class EmailAnalyzer
       current_summary = nil
       records.each do |record|
         unless current_summary and current_summary[:id] == record['id']
-          summaries << current_summary = {:id => record['id'], :name => record['name'], :fields => {}, :value => 0}
+          summaries << current_summary = {
+            :id => record['id'],
+            :name => record['name'],
+            :fields => {},
+            :value => 0
+          }
         end
         current_summary[:fields][record['field']] = record['message_count']
         current_summary[:value] += record['message_count']
-
-        current_summary[:className] = current_summary[:name]
-        current_summary[:packageName] = current_summary[:name]
       end
       return summaries
     end

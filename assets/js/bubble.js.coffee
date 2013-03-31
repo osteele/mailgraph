@@ -25,11 +25,11 @@ d3.json "contacts.json?limit=200", (error, root) ->
 
   node.append("circle")
     .attr("r", (d) -> d.r)
-    .style("fill", (d) -> color(d.packageName))
+    .style("fill", (d) -> color(d.name))
 
   node.append("text")
     .attr("dy", ".3em")
     .style("text-anchor", "middle")
-    .text((d) -> d.className.substring(0, d.r / 3))
+    .text((d) -> d.name.substring(0, d.r / 3))
 
 d3.select(self.frameElement).style("height", "#{diameter}px")
