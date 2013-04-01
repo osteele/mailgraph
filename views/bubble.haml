@@ -1,9 +1,12 @@
 !!! 5
-%head
-  %meta(charset="utf-8")
-  %title Contacts
-  %style text { font: 10px sans-serif; }
-%body
-  %h1 Frequent Correspondents
-  %script(src="/js/d3.js")
-  %script(src="/assets/js/bubble.js")
+%html(ng-app="mailgraph")
+  %head
+    %meta(charset="utf-8")
+    %title Contacts
+    %style text { font: 10px sans-serif; }
+    %link(type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.12/themes/redmond/jquery-ui.css" rel="stylesheet")
+    %script(type="text/javascript" defer src="/js/d3.js")
+    %script(type="text/javascript" defer src="/js/bubble.js")
+
+  %body
+    %h1 Frequent Correspondents
