@@ -84,15 +84,18 @@ class MessageImporter
         slice_seqnos -= recorded_gm_msg_ids.map { |gm_msg_id| gm_msg_id_to_seqno[gm_msg_id] }
 
         next unless slice_seqnos.any?
-        logger.info "Fetching #{slice_seqnos.length} messages #{slice_seqnos.first}-#{slice_seqnos.last}:"
+        logger.info "Fetching #{slice_seqnos.length} messages #{slice_seqnos.first}-#{slice_seqnos.last}"
         for message in imap.fetch(slice_seqnos, ['ENVELOPE', 'UID', 'X-GM-MSGID', 'X-GM-THRID'])
           break if limit and count >= limit
           count += 1
-          envelope = message.attr['ENVELOPE']
+
           uid = message.attr['UID']
+          envelope = message.attr['ENVELOPE']
           if record = Message.where(:account_id => account.id, :gm_message_id => message.attr['X-GM-MSGID']).first
-            next if record.uid == uid
-            puts "Updating message uid #{record.uid} -> #{uid}".gsub('  ', ' ')
+            next if record.uid == uid and record.mailbox_id == mailbox_record.id
+            date = Date.parse(envelope.date) rescue nil
+            puts "Updating message #{record.uid} (#{date || envelope.date})".gsub('  ', ' ') unless record.uid == uid
+            puts "Updating message #{uid} mailbox (#{date || envelope.date})".gsub('  ', ' ') unless record.mailbox_id == mailbox_record.id
             record.update_attributes :mailbox_id => mailbox_record.id, :uid => uid
             next
           end
@@ -123,8 +126,9 @@ class MessageImporter
             raise unless e.to_s =~ /column gm_message_id is not unique/
           end
         end
-      end
-    end
+        # break
+      end # message_seqnos.each_slice
+    end # with_message_ids
     Address.combine_addresses!
   end
 

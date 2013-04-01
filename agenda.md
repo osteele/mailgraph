@@ -1,18 +1,13 @@
 # Next
 * Duplicate contacts
-  Link -> https://www.google.com/contacts/u/0/#contacts/search/${encode name}
 * Change streamgraph to contacts
-* iPhone view
 * Sweep the cache when messages / contacts change
 * Tag cloud / stream graph: select year
 * Tag cloud / stream graph: wwitch between senders / recipients / both
-* Incremental update
-  test whether UIDNEXT has incremented?
 * Mobile view
 
 ## Bugs
 * Why does frequent correspondents query scan contacts twice?
-* Import mail no longer skips current uid's
 
 ## Public
 * ANALYZE after import
@@ -40,6 +35,11 @@
 * Remove deleted messages
 * Scan multiple folders (and filter by gid)
 
+## Optimizations
+* Incremental message update -- test whether UIDNEXT has incremented
+* Incremental contact update -- use --since
+* Analyze query, on sqlite3 and postgresql
+
 ## Architecture
 * Cache w/ https://github.com/rtomayko/rack-cache and https://github.com/jodosha/redis-store/tree/master/redis-rack-cache
 * Rewrite client in angular / derby
@@ -50,6 +50,10 @@
 * Adaptive time periods
 
 # Notes
+
+## Duplicate Contacts
+Link -> https://www.google.com/contacts/u/0/#contacts/search/${encode name}
+Update https://developers.google.com/google-apps/domain-shared-contacts/#Updating
 
 ## Delete Messages
 * A: During full update, record uid's in db that aren't in fetch. Cons: requires full update.
