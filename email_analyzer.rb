@@ -27,19 +27,22 @@ class EmailAnalyzer
 
     unless options[:by_interval]
       account_contact = Contact.for_address_spec(account.email_address, account)
-      records = Contact.connection.select_all(<<-SQL, nil, [[nil, account.id], [nil, account_contact.id], [nil, limit]])
-        SELECT *, COUNT(*) AS message_count FROM contacts_messages_view
-        WHERE account_id = $1 AND id != $2
-        GROUP BY id, field
+      records = Contact.connection.select_all(<<-SQL, nil, [[nil, account.id], [nil, account_contact.id], [nil, start_date], [nil, limit]])
+        SELECT *, COUNT(*) AS message_count, contacts_messages_view.address
+        FROM contacts_messages_view
+        JOIN messages ON contacts_messages_view.message_id=messages.id
+        WHERE contacts_messages_view.account_id = $1 AND contacts_messages_view.contact_id != $2 AND $3 < messages.date
+        GROUP BY contacts_messages_view.contact_id, field
         ORDER BY message_count DESC
-        LIMIT $3
+        LIMIT $4
       SQL
       summaries = []
       current_summary = nil
       records.each do |record|
-        unless current_summary and current_summary[:id] == record['id']
+        unless current_summary and current_summary[:id] == record['contact_id']
           summaries << current_summary = {
-            :id => record['id'],
+            :id => record['contact_id'],
+            :address => record['address'],
             :name => record['name'],
             :fields => {},
             :value => 0
@@ -57,7 +60,8 @@ class EmailAnalyzer
     while start_date < end_date
       next_date = start_date + 1.month
       results = Message.connection.select_all(<<-SQL, nil, [[nil, account.id], [nil, start_date], [nil, next_date], [nil, account_address.id]])
-        SELECT spec, addresses.id, addresses.canonical_address_id, COUNT(*) AS count FROM addresses
+        SELECT spec, addresses.id, addresses.canonical_address_id, COUNT(*) AS count
+        FROM addresses
         JOIN message_associations ON address_id=addresses.id
         JOIN messages ON message_id=messages.id
         WHERE messages.account_id = $1 AND $2 <= messages.date AND messages.date < $3

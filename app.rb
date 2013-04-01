@@ -60,7 +60,7 @@ get '/user/:id/bubble' do
 end
 
 def cached(redis, request, params, &block)
-  redis_key = "url:#{request.env['REQUEST_URI']}"
+  redis_key = "url:#{request.env['REQUEST_URI'].sub('&cache=false', '')}"
   redis[redis_key] = nil if params[:cache] == "false"
   value = redis[redis_key]
   value = nil if value == ""
@@ -76,7 +76,7 @@ get '/user/:id/contacts.json' do
   end_date = parse_date(params[:before] || params[:until]) if params[:before] or params[:until]
   limit = (params[:limit] || 20).to_i
   json = cached(redis, request, params) do
-    series = EmailAnalyzer.new(@user).series(:start => start_date, :end => end_date, :limit => limit, :by_interval => params[:by_interval])
+    series = EmailAnalyzer.new(@user).series(:start_date => start_date, :end_date => end_date, :limit => limit, :by_interval => params[:by_interval])
     series.to_json
   end
   etag Digest::SHA1.hexdigest(json)

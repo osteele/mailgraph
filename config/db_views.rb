@@ -26,7 +26,7 @@ view :addresses_contacts_view, <<-SQL
 SQL
 
 view :contacts_messages_view, <<-SQL
-  SELECT contacts.*, message_id, field
+  SELECT contacts.*, contact_id, message_id, field, addresses_contacts_view.address
   FROM contacts
   JOIN addresses_contacts_view ON addresses_contacts_view.contact_id=contacts.id
   JOIN message_associations ON addresses_contacts_view.address_id=message_associations.address_id
