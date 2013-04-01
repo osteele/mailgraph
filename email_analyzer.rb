@@ -27,31 +27,30 @@ class EmailAnalyzer
 
     unless options[:by_interval]
       account_contact = Contact.for_address_spec(account.email_address, account)
-      records = Contact.connection.select_all(<<-SQL, nil, [[nil, account.id], [nil, account_contact.id], [nil, start_date], [nil, limit]])
+      records = Contact.connection.select_all(<<-SQL, nil, [[nil, account.id], [nil, account_contact.id], [nil, start_date], [nil, end_date], [nil, limit]])
         SELECT *, COUNT(*) AS message_count, contacts_messages_view.address
         FROM contacts_messages_view
         JOIN messages ON contacts_messages_view.message_id=messages.id
-        WHERE contacts_messages_view.account_id = $1 AND contacts_messages_view.contact_id != $2 AND $3 < messages.date
+        WHERE contacts_messages_view.account_id = $1 AND contacts_messages_view.contact_id != $2
+        AND $3 < messages.date AND messages.date < $4
         GROUP BY contacts_messages_view.contact_id, field
         ORDER BY message_count DESC
-        LIMIT $4
+        LIMIT $5
       SQL
-      summaries = []
+      summaries = {}
       current_summary = nil
       records.each do |record|
-        unless current_summary and current_summary[:id] == record['contact_id']
-          summaries << current_summary = {
+        current_summary = summaries[record['contact_id']] ||= {
             :id => record['contact_id'],
             :address => record['address'],
             :name => record['name'],
             :fields => {},
             :value => 0
           }
-        end
         current_summary[:fields][record['field']] = record['message_count']
         current_summary[:value] += record['message_count']
       end
-      return summaries
+      return summaries.values
     end
 
     stats = {}

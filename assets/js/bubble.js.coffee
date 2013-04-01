@@ -20,11 +20,11 @@ d3.json "contacts.json?limit=200#{document.location.search.replace('?', '&')}", 
     .attr("class", "node")
     .attr("transform", (d) -> "translate(#{d.x},#{d.y})")
 
-  title = (d) ->
-    "#{d.name || d.address || d.id}\n#{("  #{k}: #{v}" for k, v of d.fields).join("\n")}"
+  contact_title = (d) ->
+    "#{if d.name != d.address then d.name else ""} <#{d.address}>\n#{("  #{k}: #{v}" for k, v of d.fields).join("\n")}".replace(/^ /, '')
 
   node.append("title")
-    .text(title)
+    .text(contact_title)
 
   node.append("circle")
     .attr("r", (d) -> d.r)
