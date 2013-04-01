@@ -29,12 +29,13 @@
             = surround '(', '%)' do
               = '%3.0f' % (100 * user.messages.count / user.message_count)
 
-        %p Frequent correspondents
-        %a.clearfix(href="/user/#{user.id}/stream") Contact Stream
+        %h2 Frequent correspondents
+        %a.clearfix(href="/user/#{user.id}/stream") Stream
+        %a.clearfix(href="/user/#{user.id}/bubble") Bubble
         %div.addresses
           - for contact in EmailAnalyzer.new(user).frequent_correspondents(40) #.sort_by { |a| (a.display_name || a.spec).downcase }
             %span.address[contact]
-              = "#{contact.name} &lt;#{contact.spec}&gt; (#{contact.message_count})"
+              = "#{contact.name} &lt;#{contact.address}&gt; (#{contact.message_count})"
               %span.hidden.me me!
               %span.hidden.same-as same as&hellip;
 

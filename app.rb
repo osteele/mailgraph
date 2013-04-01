@@ -60,7 +60,7 @@ get '/user/:id/bubble' do
 end
 
 def cached(redis, request, params, &block)
-  redis_key = "url:#{request.path}"
+  redis_key = "url:#{request.env['REQUEST_URI']}"
   redis[redis_key] = nil if params[:cache] == "false"
   value = redis[redis_key]
   value = nil if value == ""
