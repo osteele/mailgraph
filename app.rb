@@ -51,8 +51,8 @@ get '/user/:id' do
   haml :index, :locals => {:user => @user, :loading => @user.message_count && @user.messages.count < @user.message_count}
 end
 
-get '/user/:id/flow' do
-  haml :flow, :locals => {:user => @user}
+get '/user/:id/stream' do
+  haml :stream, :locals => {:user => @user}
 end
 
 get '/user/:id/bubble' do

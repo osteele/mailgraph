@@ -1,5 +1,7 @@
 # Next
-* Duplicate contacts
+* Remove duplicate contacts
+  * Drag to combine circles
+  * Recognize duplicate email addresses
 * Change streamgraph to contacts
 * Sweep the cache when messages / contacts change
 * Tag cloud / stream graph: select year
@@ -26,6 +28,7 @@
 * Wait List
 * PJax
 * etag Digest::SHA1.hexdigest
+* User UUID
 
 ## Debugging
 * https://github.com/codegram/rack-webconsole
@@ -76,3 +79,9 @@ Update https://developers.google.com/google-apps/domain-shared-contacts/#Updatin
     expires Time.now + (365*24*60*60) if settings.production?
 
 https://github.com/kalasjocke/sinatra-asset-pipeline/blob/master/Rakefile
+
+## Database column collation
+http://www.postgresql.org/docs/9.1/static/sql-altertable.html
+http://www.postgresql.org/docs/8.4/static/citext.html
+https://postgres.heroku.com/blog/past/2012/8/2/announcing_support_for_17_new_postgres_extensions_including_dblink/
+sqlite: alter table collate nocase

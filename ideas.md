@@ -6,6 +6,7 @@
 * Collect links
 * Voice summarization
 * Show unreplied messages (incoming, outgoing)
+* Graph by geo IP
 * Query language, e.g.:
 
     Incoming unanswered messages from a contact or correspondent.
